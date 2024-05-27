@@ -1,0 +1,13 @@
+question: "Let $f$ be a probalitiy density function. Which of the following are correct?"
+
+answers:
+  - $f(x) > 0, \quad \forall x\in\mathbb{R}$
+  - $f(x) \geq 0, \quad \forall x\in\mathbb{R}$
+  - $\int_{-\infty}^{\infty} f(x) \dif x = 0$
+  - $\int_{-\infty}^{\infty} f(x) \dif x = 1$
+  - $\int_{-\infty}^{\infty} f(x) \dif x = \infty$
+
+right_answers:
+  - 0
+  - 1
+  - 3
