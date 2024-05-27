@@ -1,29 +1,82 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
 [tool.poetry]
-name = "randex"
-version = "0.1.0"
-description = "Create randomized multiple choice exams using latex."
 authors = ["G. Arampatzis <gtarabat@gmail.com>"]
-readme = "README.md"
+description = "Create randomized multiple choice exams using latex."
+name = "randex"
 packages = [
   {include = "randex"},
-  {include = "scripts"},
+  {include = "scripts"}
 ]
+readme = "README.md"
+version = "0.1.0"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-pretty-errors = "^1.2.25"
-pyyaml = "^6.0.1"
+cerberus = "^1.3.5"
 click = "^8.1.7"
 pprintpp = "^0.4.0"
-cerberus = "^1.3.5"
-
+pretty-errors = "^1.2.25"
+python = "^3.10"
+pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 bpython = "^0.24"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+pre-commit = "^3.7.1"
 
 [tool.poetry.scripts]
 validate = "scripts.validate:main"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+ignore = [
+  # pydocstyle
+  "D104",
+  "D105",
+  "D107",
+  "D203",
+  "D205",
+  "D212",
+  "D400",
+  "D415",
+  # pylint
+  "PLR0913",
+  "PLR0915",
+  # ruff
+  "RUF001",
+  "RUF015",
+  # flake8-bandit
+  "S101",
+  "S102",
+  "S602",
+  "S603",
+  "S604",
+  # mccabe
+  "C90",
+  # flake8-anootations
+  "ANN",
+  # flake8-commas
+  "COM819",
+  #
+  "PD901",
+  "PERF203",
+  "A002",
+  "A003",
+  "PTH",
+  "FBT",
+  "DTZ",
+  "EM",
+  "FA100",
+  "T201",
+  "TRY003",
+  "ISC001",
+  "ARG002"  # remove this after the code has been stabilized
+]
+select = ["ALL"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
