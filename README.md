@@ -1,7 +1,10 @@
 # Randex: Randomized Exams
 
-This library creates randomized multiple choice questions chosen from a user-defined
-pool of questions. The final exam is a latex document that is compiled into a pdf.
+This library creates exams by
+randomizing multiple choice questions chosen from a user-defined
+pool of questions. 
+The final exam is a latex document that is compiled into a pdf.
+Multiple exams can be created at once.
 
 # Installation
 
