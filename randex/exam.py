@@ -48,6 +48,9 @@ class Question:
             },
             'right_answers': {
                 'type': 'list',
+                'leq_length': 'answers',
+                'elements_leq_length': 'answers',
+                'check_with': 'nonnegative_elements',
                 'required': True,
                 'coerce': lambda v: [int(i) for i in v],
                 'schema':{
@@ -133,13 +136,23 @@ class Exam:
         q_schema = Question.get_schema()
         
         if qpath.is_file():
-            cfg = validate(q_schema, qpath)
+            try:
+                cfg = validate(q_schema, qpath)
+            except RuntimeError as e:
+                raise Exception(f"Error in while loading {qpath}") from e
+                
             self._questions += [Question(**cfg)]
             return
         
         if qpath.is_dir():
             for q in qpath.glob('**/*.yaml'):
-                cfg = validate(q_schema, q)
+                try:
+                    cfg = validate(q_schema, q)
+                except RuntimeError as e:
+                    print(f"Error while loading {q}.")
+                    print(e)
+                    exit()
+                    
                 self._questions += [Question(**cfg)]
             return
 

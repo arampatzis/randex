@@ -11,7 +11,15 @@ from cerberus import Validator
 
 class RandexValidator(Validator):
     """Custom validator for the TSF package."""
-    
+
+    def _check_with_nonnegative_elements(self, field, value):
+            """
+            Test that all elements in the list are positive.
+            """
+            if isinstance(value, list):
+                if not all( item >= 0 for item in value):
+                    self._error(field, 'All elements must be non-negative numbers')
+        
     def _validate_match_length(self, other, field, value):
         """
         Test if two lists have the same length.
@@ -38,11 +46,12 @@ class RandexValidator(Validator):
             return False
         
         if len(value) > len(self.document[other]):
-            self._error(field, f'Length greater than the length of \'{other}\'.')
+            self._error(field, f'length of {field} is greater than the length of \'{other}\'.')
+
 
     def _validate_elements_leq_length(self, other, field, value):
         """
-        Test if a list has elements less or equal than the length of some other list.
+        Test if a list has elements less than the length of some other list.
 
         The rule's arguments are validated against this schema:
         {'type': 'string'}
@@ -51,9 +60,13 @@ class RandexValidator(Validator):
         if other not in self.document:
             return False
         
+        len_other = len(self.document[other])
+        
         for v in value:
-            if v > len(self.document[other]):
-                self._error(field, f'{v} is greater than the length of \'{other}\'.')
+            if v >= len_other:
+                self._error(
+                    field, f'item with value {v} is greater or equal than the length of \'{other}\'({len_other}).'
+                )
 
 
 RandexValidator.types_mapping['path'] = TypeDefinition('path', (Path, ), ())
