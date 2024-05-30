@@ -1,0 +1,10 @@
+question: What is the median value of the set $\{1,2,3,4\}$?
+
+answers:
+-   5
+-   2.5
+-   2
+-   4
+
+right_answers:
+-   1

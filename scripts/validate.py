@@ -1,10 +1,11 @@
-"""Script that validates the one question, or all the questions inside a folder."""
+"""Script that validates a single question, or all questions inside a folder."""
 from pathlib import Path
+from dataclasses import asdict
 
 import click
 
-from randex.exam import Exam
-
+from randex.exam import Exam, Header
+from randex.schema import validate
 
 @click.command(
     context_settings={"help_option_names": ["--help"]},
@@ -26,17 +27,27 @@ from randex.exam import Exam
     default=".",
     help="Run the latex compiler inside this folder",
 )
+@click.option(
+    "--clean",
+    "-c",
+    is_flag=True,
+    default=False,
+    help="Clean all latex compilation auxiliary files.",
+)
 def main(
     header_path: Path,
     question_path: Path,
     aux_path: Path,
+    clean: bool,
 ) -> None:
     """Run the main tasks of the script."""
-    e = Exam()
+    
+    header = Header.load(header_path)
+    
+    e = Exam(header=header)
     e.add_question(question_path)
-    e.load_header(header_path)
 
-    result = e.compile(aux_path)
+    result = e.compile(aux_path, clean=clean)
 
     print("STDOUT:")
     print("\n\t".join(result.stdout.splitlines()))

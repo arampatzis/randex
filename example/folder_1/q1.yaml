@@ -1,4 +1,4 @@
-question: What is the value of $\int d \dif x$?
+question: What is the value of $\int x \dif x$?
 
 answers:
 -   $x$

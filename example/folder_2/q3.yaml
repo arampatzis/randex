@@ -1,0 +1,14 @@
+question: |
+    What is the mean value of a random variable that follows the uniform distribution
+    on the interval $[0, 10]$?
+
+
+answers:
+-   5
+-   2.5
+-   10
+-   0
+-   1
+
+right_answers:
+-   0

@@ -74,7 +74,7 @@ class RandexValidator(Validator):
 RandexValidator.types_mapping["path"] = TypeDefinition("path", (Path,), ())
 
 
-def validate(schema: dict, document: dict | Path):
+def validate(schema: dict, document: dict | Path) -> dict:
     """
     Validate a dictionary, or load the dictionary from a yaml file,
     against schema using Cerberus.
