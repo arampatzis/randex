@@ -9,6 +9,11 @@ from cerberus import TypeDefinition, Validator
 class RandexValidator(Validator):
     """Custom validator for the TSF package."""
 
+    def _check_with_positive(self, field, value):
+        """Test whether a certain field has a positive value."""
+        if value <= 0:
+            self._error(field, "Must be a positive number.")
+
     def _check_with_nonnegative_elements(self, field, value):
         """Test that all elements in the list are positive."""
         if isinstance(value, list) and not all(item >= 0 for item in value):

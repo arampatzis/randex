@@ -1,0 +1,12 @@
+question: What is $1+1$?
+
+answers:
+-   0
+-   1
+-   2
+-   3
+
+right_answers:
+-   "2"
+
+points: 1

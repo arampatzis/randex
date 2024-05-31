@@ -4,18 +4,18 @@ These classes are the building block of the library.
 """
 import subprocess
 import sys
-import yaml
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from random import sample, shuffle
 from typing import TypeVar
 
-from typing_extensions import Self
+import yaml
 from cerberus import TypeDefinition
 from pypdf import PdfWriter
+from typing_extensions import Self
 
-from randex.schema import validate, RandexValidator
 from randex.load_dump import yaml_dump
+from randex.schema import RandexValidator, validate
 
 T = TypeVar("T")
 LT = list[T] | tuple[T, ...]
@@ -23,10 +23,12 @@ LT = list[T] | tuple[T, ...]
 
 @dataclass(kw_only=True)
 class Pool:
+    """A collection of folders containg questions in YAML format"""
+
     folders: LT[Path]
     # List or tuple of folders containing questions in YAML files
 
-    files: list[list[Path]] = field(default_factory=lambda: [])
+    files: list[list[Path]] = field(default_factory=list)
     # A list with the YAML files per folder
 
     N: int = 0
@@ -50,19 +52,21 @@ class Pool:
 
             self.n.append(n)
             self.files.append(g)
-        
+
         self.N = len(self.folders)
 
-
     def get_questions(self, num_items: list[int] | None = None):
+        """
+        Get num_items questions from the pool. num_items is a list, and each
+        items corresponds to the number of questions chosen from one folder.
+        """
         if not num_items:
             num_items = [1 for _ in self.folders]
 
         fs = []
         for k, files in enumerate(self.files):
-
             if num_items[k] > len(files):
-                raise ValueError("The")
+                raise ValueError("TODO...")
 
             fs += sample(files, num_items[k])
 
@@ -75,17 +79,17 @@ class Pool:
     def get_schema(cls) -> str:
         """Return the data schema of the dataclass."""
         return {
-            'folders': {
-                'type': 'list',
-                'schema': {
-                    'type': 'path',
-                    'coerce': Path,
+            "folders": {
+                "type": "list",
+                "schema": {
+                    "type": "path",
+                    "coerce": Path,
                 },
             },
-            'N':{
-                'type': 'integer',
-                'coerce': int,
-                'required': False,
+            "N": {
+                "type": "integer",
+                "coerce": int,
+                "required": False,
             },
             "n": {
                 "type": "list",
@@ -96,19 +100,19 @@ class Pool:
                     "type": "integer",
                 },
             },
-            'files': {
-                'type': 'list',
-                'required': False,
-                'schema': {
-                    'type': 'list',
-                    'schema': {
-                        'type': 'path',
-                        'coerce': Path
+            "files": {
+                "type": "list",
+                "required": False,
+                "schema": {
+                    "type": "list",
+                    "schema": {
+                        "type": "path",
+                        "coerce": Path,
                     },
                 },
             },
         }
-        
+
 
 @dataclass(kw_only=True)
 class Question:
@@ -116,7 +120,12 @@ class Question:
 
     question: str
     answers: list[str]
-    right_answers: list[str]
+    right_answers: list[int]
+    points: int = 1
+    n: int = field(init=False)
+
+    def __post_init__(self):
+        self.n = len(self.answers)
 
     def randomize(self):
         """Randomize the order of the questions."""
@@ -124,15 +133,20 @@ class Question:
         shuffle(index)
 
         self.answers = [self.answers[i] for i in index]
-        self.right_answers = [index[i] for i in self.right_answers]
+        self.right_answers = [index.index(i) for i in self.right_answers]
 
     def __str__(self):
         """Return a latex-ready string of the question."""
         qdoc = []
-        qdoc += [r"\item " + self.question]
-        qdoc += ["\\begin{tasks}[label-format={\\bfseries}](3)"]
-        qdoc += ["    \\task " + k for k in self.answers]
-        qdoc += ["\\end{tasks}"]
+        qdoc += [f"\\question[{self.points}]" + self.question]
+        qdoc += ["\n\\begin{oneparchoices}"]
+
+        for i in range(len(self.answers)):
+            s = "\\correctchoice " if i in self.right_answers else "\\choice "
+
+            qdoc += ["    " + s + self.answers[i]]
+
+        qdoc += ["\\end{oneparchoices}"]
 
         return "\n".join(qdoc)
 
@@ -163,33 +177,51 @@ class Question:
                     "type": "integer",
                 },
             },
+            "points": {
+                "type": "integer",
+                "check_with": "positive",
+                "required": True,
+            },
         }
 
 
-RandexValidator.types_mapping['Question'] = TypeDefinition('Question', (Question,), ())
+RandexValidator.types_mapping["Question"] = TypeDefinition("Question", (Question,), ())
 
 
 @dataclass(kw_only=True)
-class Header:
+class Tex:
     """Dataclass that holds the basic elements of a latex exam document."""
 
     documentclass: str
-    usepackage: str
     prebegin: str
     postbegin: str
+    preend: str
+    lhead: str = ""
+    chead: str = ""
+    _head: str = field(init=False)
 
-    @classmethod
-    def load(self, header: Path | dict | None) -> Self:
-        """Load the header parts of the exam."""
-        if not header:
-            header = {}
+    def __post_init__(self):
+        self._head = "\n\\pagestyle{head}\n" "\\runningheadrule\n"
 
-        elif isinstance(header, Path) and not header.is_file():
-            print(f"The file {header} does not exist. Using the default header.")
-            header = {}
+    @property
+    def head(self):
+        """Return the protected variable _head"""
+        return self._head
 
-        cfg = validate(Header.get_schema(), header)
-        return Header(**cfg)
+    @staticmethod
+    def load(tex: Path | dict | None) -> Self:
+        """Load the tex parts of the exam."""
+        if not tex:
+            tex = {}
+
+        elif isinstance(tex, Path) and not tex.is_file():
+            print(
+                f"The file {tex} does not exist. Using the default exam configuration.",
+            )
+            tex = {}
+
+        cfg = validate(Tex.get_schema(), tex)
+        return Tex(**cfg)
 
     @classmethod
     def get_schema(cls) -> str:
@@ -198,9 +230,9 @@ class Header:
             "documentclass": {
                 "type": "string",
                 "required": False,
-                "default": "\\documentclass[11pt]{article}\n\n",
+                "default": "\\documentclass[11pt]{exam}\n\n",
             },
-            "usepackage": {
+            "prebegin": {
                 "type": "string",
                 "required": False,
                 "default": (
@@ -208,12 +240,6 @@ class Header:
                     "\\usepackage{amssymb}\n"
                     "\\usepackage{bm}\n"
                     "\\usepackage{geometry}\n\n"
-                ),
-            },
-            "prebegin": {
-                "type": "string",
-                "required": False,
-                "default": (
                     "\n\\geometry{\n"
                     "    a4paper,\n"
                     "    total={160mm,250mm},\n"
@@ -221,9 +247,31 @@ class Header:
                     "    right=15mm,\n"
                     "    top=20mm,\n"
                     "}\n\n"
+                    r"\linespread{1.2}"
                 ),
             },
             "postbegin": {
+                "type": "string",
+                "required": False,
+                "default": (
+                    "\n\\makebox[0.9\\textwidth]{Name\\enspace\\hrulefill}\n"
+                    "\\vspace{10mm}\n\n"
+                    "\\makebox[0.3\\textwidth]{Register number:\\enspace\\hrulefill}\n"
+                    "\\makebox[0.6\\textwidth]{School:\\enspace\\hrulefill}\n"
+                    "\\vspace{10mm}\n\n"
+                ),
+            },
+            "preend": {
+                "type": "string",
+                "required": False,
+                "default": "",
+            },
+            "lhead": {
+                "type": "string",
+                "required": False,
+                "default": "",
+            },
+            "chead": {
                 "type": "string",
                 "required": False,
                 "default": "",
@@ -231,19 +279,21 @@ class Header:
         }
 
 
-RandexValidator.types_mapping['Header'] = TypeDefinition('Header', (Header,), ())
+RandexValidator.types_mapping["Tex"] = TypeDefinition("Tex", (Tex,), ())
 
 
 @dataclass(kw_only=True)
 class Exam:
     """A dataclass for a single exam with multiple questions."""
 
-    header: Header
+    tex: Tex
 
-    sn: int = 0
-    
+    show_answers: bool = False
+
+    sn: str = "0"
+
     questions: list[Question] = field(default_factory=list)
-    
+
     def add_question(self, qpath: Path):
         """Add a question to the exam."""
         q_schema = Question.get_schema()
@@ -261,12 +311,12 @@ class Exam:
             for q in qpath.glob("**/*.yaml"):
                 try:
                     cfg = validate(q_schema, q)
+                    self.questions += [Question(**cfg)]
                 except RuntimeError as e:
-                    print(f"Error while loading {q}.")
-                    print(e)
-                    sys.exit()
+                    print("No question added.")
+                    print(f"Skip {q} because of error:")
+                    print("\t".join(("\n" + str(e).lstrip()).splitlines(True)))
 
-                self.questions += [Question(**cfg)]
             return
 
     def compile(
@@ -287,7 +337,7 @@ class Exam:
             f.write(str(self))
 
         cmd = f"latexmk -pdf -cd {path}/exam.tex -interaction=nonstopmode -f"
-
+        print(cmd)
         result = subprocess.run(
             cmd.split(),
             capture_output=True,
@@ -298,9 +348,8 @@ class Exam:
         if clean:
             import time
 
-            time.sleep(0.5)
-            cmd = f"latexmk -c -cd {path}/question.tex"
-            print(cmd)
+            time.sleep(1)
+            cmd = f"latexmk -c -cd {path}/exam.tex"
             subprocess.run(
                 cmd.split(),
                 capture_output=True,
@@ -312,23 +361,27 @@ class Exam:
 
     def __str__(self):
         """Latex-ready representation of the exam."""
-        doc = self.header.documentclass
-        doc += self.header.usepackage
+        doc = self.tex.documentclass
+        doc += self.tex.prebegin
 
-        doc += "\\usepackage{tasks}\n"
+        if self.show_answers:
+            doc += "\n\n\\printanswers\n\n"
 
-        doc += self.header.prebegin
+        doc += self.tex.head
+        doc += f"\n\\rhead{{{self.sn}}}\n\n"
+        doc += self.tex.lhead
+        doc += self.tex.chead
 
-        doc += "\n\\begin{document}\n"
-        doc += self.header.postbegin
+        doc += "\n\n\\begin{document}\n"
+        doc += self.tex.postbegin
 
-        doc += "\n\\begin{enumerate}\n"
-
+        doc += "\\begin{questions}\n\n"
         for q in self.questions:
             q.randomize()
             doc += "\n" + str(q) + "\n"
+        doc += "\n\n\\end{questions}\n\n"
 
-        doc += "\n\\end{enumerate}\n"
+        doc += self.tex.preend
 
         doc += "\n\\end{document}"
 
@@ -336,39 +389,46 @@ class Exam:
 
     @classmethod
     def get_schema(cls) -> dict:
-        """Schema of the configuration."""
+        """Return the schema of the configuration."""
         return {
-            'header': {
-                'type': 'Header',
-                'required': True,
+            "tex": {
+                "type": "Tex",
+                "required": True,
             },
-            'sn': {
-                'type': 'integer',
-                'required': False,
-                'default': 1,
-                'coerce': int,
+            "sn": {
+                "type": "string",
+                "required": False,
+                "default": "0",
+                "coerce": str,
             },
-            'questions': {
-                'type': 'list',
-                'schema': {
-                    'type': 'Question',
+            "questions": {
+                "type": "list",
+                "schema": {
+                    "type": "Question",
                 },
-                'required': False,
-                'nullable': True,
+                "required": False,
+                "nullable": True,
+            },
+            "show_answers": {
+                "type": "boolean",
+                "required": False,
+                "default": False,
             },
         }
 
 
 @dataclass(kw_only=True)
 class ExamBatch:
+    """A batch of exams with random questions."""
+
     N: int
     # Number of exams in the batch
 
     pool: Pool
     # Pool object with the availabe questions
 
-    header: Header
-    # Latex header class
+    tex: Tex
+    # Tex class with all the exam components except the questions
 
     n: list[int] | int = field(default=1)
     # Number of questions per folder in pool
@@ -377,14 +437,17 @@ class ExamBatch:
     # List with all exams
 
     def __post_init__(self):
-        
+        if not self.n:
+            print(f"Invalid value for number of question per folder: {self.n}")
+
         if isinstance(self.n, int | float):
-            self.n = [self.n for i in self.pool.n]
+            self.n = [self.n for _ in self.pool.n]
 
         else:
-            if len(self.n) != self.pool.N:
-                print("Error: len(self.n) != self.pool.N")
-                sys.exit()
+            self.n = list(self.n)
+            if len(self.n) < self.pool.N:
+                k = self.pool.N - len(self.n)
+                self.n.extend(k * [self.n[-1]])
 
             for i in range(self.pool.N):
                 if self.n[i] > self.pool.n[i]:
@@ -393,78 +456,79 @@ class ExamBatch:
 
     def make_batch(self):
         """Make a batch of exams"""
+        N = len(str(self.N))
+
         for i in range(self.N):
             qs = self.pool.get_questions(self.n)
-
-            e = Exam(sn=i, header=self.header)
+            sn = str(i).zfill(N)
+            e = Exam(sn=sn, tex=self.tex)
             for q in qs:
                 e.add_question(q)
 
             self.exams.append(e)
-    
+
     def dump(self, path: Path):
         """Save the exams in YAML"""
         path = path.resolve()
-        if path.suffix not in ('.yaml', '.yml'):
-            print('The extension of {path} is not yaml or yml.')
-            exit()
+        if path.suffix not in (".yaml", ".yml"):
+            print("The extension of {path} is not yaml or yml.")
+            sys.exit()
         path.parent.mkdir(exist_ok=True, parents=True)
         yaml_dump(asdict(self), path)
 
     @staticmethod
-    def load( path: Path) -> Self:
+    def load(path: Path) -> Self:
         """Load a batch exam YAML file"""
-        with open('data.yml', 'r') as f:
+        with open(path) as f:
             d = yaml.safe_load(f)
-        
-        cfg = validate(Pool.get_schema(), d['pool'])
+
+        cfg = validate(Pool.get_schema(), d["pool"])
         pool = Pool(**cfg)
 
         exams = []
-        for e in d['exams']:
-            cfg = validate(Header.get_schema(), e['header'])
-            header = Header(**cfg)
-            
+        for e in d["exams"]:
+            cfg = validate(Tex.get_schema(), e["tex"])
+            tex = Tex(**cfg)
+
             questions = []
-            for q in e['questions']:
+            for q in e["questions"]:
                 cfg = validate(Question.get_schema(), q)
                 questions.append(Question(**cfg))
-            
+
             cfg = {
-                'header': header,
-                'sn': e['sn'],
-                'questions': questions,
+                "tex": tex,
+                "sn": e["sn"],
+                "questions": questions,
             }
             cfg = validate(Exam.get_schema(), cfg)
             exams.append(Exam(**cfg))
 
-        cfg = validate(Header.get_schema(), d['header'])
-        header = Header(**cfg)    
-        
+        cfg = validate(Tex.get_schema(), d["tex"])
+        tex = Tex(**cfg)
+
         cfg = {
-            'pool': pool,
-            'header': header,
-            'exams': exams,
-            'n': [int(i) for i in d['n']],
-            'N': int(d['N']),
+            "pool": pool,
+            "tex": tex,
+            "exams": exams,
+            "n": [int(i) for i in d["n"]],
+            "N": int(d["N"]),
         }
         return ExamBatch(**cfg)
-    
+
     def compile(self, clean: bool, path: Path):
         """Compile all exams"""
-        
         pdfs = []
-        
+
         for e in self.exams:
             print(e.sn)
             p = path / str(e.sn)
             p.mkdir(exist_ok=True, parents=True)
             e.compile(p, clean)
-            pdfs.append(p / 'exam.pdf')
-            
+            pdfs.append(p / "exam.pdf")
+
         merger = PdfWriter()
         for pdf in pdfs:
             merger.append(pdf)
 
-        merger.write(path / 'exams.pdf')
+        merger.write(path / "exams.pdf")
         merger.close()

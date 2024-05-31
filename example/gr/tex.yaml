@@ -1,0 +1,62 @@
+documentclass: \documentclass[11pt, addpoints]{exam}
+
+prebegin: |
+    \usepackage[english,greek]{babel}
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+    \usepackage{bm}
+    \usepackage{geometry}
+    \usepackage{parskip}
+    \usepackage[pdftex]{graphicx}
+    \usepackage{color}
+    \usepackage{xcolor,colortbl}
+    \usepackage{caption}
+    \usepackage{subcaption}
+    \usepackage{booktabs}
+    \usepackage{amsthm}
+    \usepackage{mathtools}
+    \usepackage{commath}
+    \usepackage{bbm}
+    \usepackage[c]{esvect}
+    \usepackage{upgreek}
+    \usepackage[capitalise]{cleveref}
+    \usepackage{import}
+    \usepackage{xifthen}
+    \usepackage{pdfpages}
+    \usepackage{transparent}
+    \usepackage{pgfplots}
+    \usepackage{float}
+    \usepackage{eurosym}
+
+    \geometry{
+      a4paper,
+      total={160mm,250mm},
+      left=15mm,
+      right=15mm,
+      top=20mm,
+    }
+    \linespread{1.2}
+
+    \hqword{Ερώτηση:}
+    \hpword{Μονάδες:}
+    \hsword{Βαθμός:}
+    \htword{Σύνολο}
+
+    \pointpoints{μονάδα}{μονάδες} 
+    \pointsdroppedatright
+
+lhead: \lhead{Μαθηματικά}
+chead: \chead[02.02.24]{σελίδα  \thepage\ of \numpages}
+
+postbegin: |
+    \vspace{10mm}
+    \makebox[0.9\textwidth]{Όνομα/Επώνυμο\enspace\hrulefill}
+
+    \vspace{10mm}
+    \makebox[0.3\textwidth]{ΑΜ:\enspace\hrulefill}
+    \makebox[0.6\textwidth]{Τμήμα:\enspace\hrulefill}
+    \vspace{10mm}
+
+preend: |
+    \vspace*{\fill}
+    \centering\gradetable[h][questions]

@@ -16,13 +16,13 @@ version = "0.1.0"
 [tool.poetry.dependencies]
 cerberus = "^1.3.5"
 click = "^8.1.7"
+pp-ez = "^0.2.0"
 pprintpp = "^0.4.0"
 pretty-errors = "^1.2.25"
+pypdf = "^4.2.0"
 python = "^3.10"
 pyyaml = "^6.0.1"
 typing-extensions = "^4.12.0"
-pp-ez = "^0.2.0"
-pypdf = "^4.2.0"
 
 [tool.poetry.group.dev.dependencies]
 bpython = "^0.24"
@@ -78,7 +78,7 @@ ignore = [
   "T201",
   "TRY003",
   "ISC001",
-  "ARG002"  # remove this after the code has been stabilized
+  "N806"
 ]
 select = ["ALL"]
 

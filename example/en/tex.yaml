@@ -1,6 +1,6 @@
-documentclass: \documentclass[11pt]{article}
+documentclass: \documentclass[11pt, addpoints]{exam}
 
-usepackage: |
+prebegin: |
     \usepackage{amsmath}
     \usepackage{amssymb}
     \usepackage{bm}
@@ -27,7 +27,6 @@ usepackage: |
     \usepackage{float}
     \usepackage{eurosym}
 
-prebegin: |
     \geometry{
       a4paper,
       total={160mm,250mm},
@@ -35,5 +34,21 @@ prebegin: |
       right=15mm,
       top=20mm,
     }
+    \linespread{1.2}
 
-postbegin:
+
+lhead: \lhead{Mathematics}
+chead: \chead[02.02.24]{page  \thepage\ of \numpages}
+
+postbegin: |
+    \vspace{10mm}
+    \makebox[0.9\textwidth]{Name\enspace\hrulefill}
+
+    \vspace{10mm}
+    \makebox[0.3\textwidth]{Register number:\enspace\hrulefill}
+    \makebox[0.6\textwidth]{School:\enspace\hrulefill}
+    \vspace{10mm}
+
+preend: |
+    \vspace*{\fill}
+    \centering\gradetable[h][questions]

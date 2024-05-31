@@ -8,6 +8,8 @@ answers:
 -   $\int_{-\infty}^{\infty} f(x) \dif x = \infty$
 
 right_answers:
--   0
 -   1
 -   3
+
+
+points: 2

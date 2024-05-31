@@ -1,0 +1,13 @@
+question: Which of the bellow is true for number 1?
+
+answers:
+-   $1 > 0$
+-   $1 < 0$
+-   $1 > 2$
+-   $1 < 2$
+
+right_answers:
+-   0
+-   3
+
+points: 2

@@ -1,0 +1,12 @@
+question: Πόσο κάνει $1+1$?
+
+answers:
+-   1
+-   2
+-   "3"
+-   "4"
+
+right_answers:
+-   1
+
+points: 1

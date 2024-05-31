@@ -3,8 +3,9 @@ from pathlib import Path
 
 import click
 
-from randex.exam import Pool, Exam, ExamBatch, Header
+from randex.exam import ExamBatch, Pool, Tex
 from randex.schema import validate
+
 
 @click.command(
     context_settings={"help_option_names": ["--help"]},
@@ -22,10 +23,24 @@ from randex.schema import validate
     help="Batch size",
 )
 @click.option(
-    "--header-path",
-    "-h",
-    type=Path,
-    help="Path to the yaml file that contains the header information",
+    "--questions-per-folder",
+    "-n",
+    type=int,
+    default=[1],
+    multiple=True,
+    help="Number of questions per folder",
+)
+@click.option(
+    "--tex-path",
+    "-t",
+    type=click.Path(
+        exists=True,
+        resolve_path=True,
+        file_okay=True,
+        dir_okay=False,
+        path_type=Path,
+    ),
+    help="Path to the yaml file that contains the exam configuration",
 )
 @click.option(
     "--out-folder",
@@ -39,29 +54,27 @@ from randex.schema import validate
     "-c",
     is_flag=True,
     default=False,
-    help="Clean all latex compilation auxiliary files"
+    help="Clean all latex compilation auxiliary files",
 )
 def main(
     paths: Path,
+    questions_per_folder: list,
     batch_size: int,
-    header_path: Path,
+    tex_path: Path,
     out_folder: Path,
     clean: bool,
 ) -> None:
     """Run the main tasks of the script."""
-    
-    cfg = {'folders': paths}
+    cfg = {"folders": paths}
     cfg = validate(Pool.get_schema(), cfg)
     pool = Pool(**cfg)
-        
-    header = Header.load(header_path)
-    
-    b = ExamBatch(N=batch_size, pool=pool, header=header)
+
+    header = Tex.load(tex_path)
+
+    b = ExamBatch(N=batch_size, pool=pool, tex=header, n=questions_per_folder)
+
     b.make_batch()
 
-    # b = ExamBatch.load(out_folder / 'exams.yaml')
-
     b.compile(clean=clean, path=out_folder)
-    
-    b.dump(out_folder / 'exams.yaml')
-    
+
+    b.dump(out_folder / "exams.yaml")
