@@ -1,5 +1,3 @@
-Certainly! Here's an improved version of your README file written in Markdown:
-
 # Randex: Randomized Exams
 
 Randex is a library that creates exams by randomizing multiple-choice questions selected from a user-defined pool of questions. The final exam is generated as a LaTeX document and compiled into a PDF. Multiple exams can be created at once.
