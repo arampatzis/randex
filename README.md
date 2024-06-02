@@ -4,11 +4,27 @@ Randex is a library that creates exams by randomizing multiple-choice questions 
 
 ## Installation
 
-Randex requires Python version `3.10` or higher.
+Randex requires Python version `3.10` or higher, `Poetry`, and `latexmk`.
 
 ### Poetry
 
 [Poetry](https://python-poetry.org) is the packaging and dependency manager used for this project. To install Poetry, follow the instructions [here](https://python-poetry.org/docs/#installing-with-pipx).
+
+### latexmk
+
+From [here](https://mg.readthedocs.io/latexmk.html):
+```
+Latexmk is a Perl script which you just have to run once and it does everything else for you... completely automagically.
+```
+
+and [here](https://www.cantab.net/users/johncollins/latexmk/)
+
+```
+Latexmk is also available at CTAN at https://ctan.org/pkg/latexmk/, and is/will be in the TeXLive and MiKTeX distributions.
+```
+
+If you have already `Latex` installed in your system, you will most
+probably have already `latexmk` installed as well.
 
 ### Randex
 
@@ -57,8 +73,12 @@ The `Tex` file is a `YAML` file that describes the LaTeX file that will produce 
     \pagestyle{head}
     \runningheadrule
     ```
-- `postbegin` (optional): String with all the commands right after the `\begin{document}` command. Default: empty string.
-- `preend` (optional): String with all the commands right before the `\end{document}` command. Default: empty string.
+- `postbegin` (optional): String with all the commands right after the "\begin{document}" command. Default: empty string.
+- `preend` (optional): String with all the commands right before the "\end{document}" command. Default: empty string.
+- `lhead` (optional): String that is displayed on the left part of the head. Default: empty string
+- `chead` (optional): String that is displayed on the center part of the head. Default: empty string
+
+The right part of the head is reserved for the serial number of the exam.
 
 ### Questions File
 

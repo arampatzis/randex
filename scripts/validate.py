@@ -10,14 +10,14 @@ from randex.exam import Exam, Tex
     context_settings={"help_option_names": ["--help"]},
 )
 @click.argument(
-    "question_path",
+    "folder",
     type=Path,
 )
 @click.option(
     "--tex-path",
     "-t",
     type=Path,
-    help="Path to the yaml file that contains the exam configuration",
+    help="Path to the YAML file that contains the exam configuration",
 )
 @click.option(
     "--out-folder",
@@ -38,17 +38,20 @@ from randex.exam import Exam, Tex
     "-a",
     is_flag=True,
     default=False,
-    help="Show the right answers on the pdf.",
+    help="Show the right answers on the pdf",
 )
 def main(
-    tex_path: Path,
+    folder: Path,
     question_path: Path,
     out_folder: Path,
     clean: bool,
     answers: bool,
 ) -> None:
-    """Run the main tasks of the script."""
-    header = Tex.load(tex_path)
+    """
+    Create a pdf file with all the questions defined in FOLDER.
+    The FOLDER is traversed recursively.
+    """
+    header = Tex.load(folder)
 
     e = Exam(tex=header, show_answers=answers)
 

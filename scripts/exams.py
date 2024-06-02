@@ -11,7 +11,7 @@ from randex.schema import validate
     context_settings={"help_option_names": ["--help"]},
 )
 @click.argument(
-    "paths",
+    "folders",
     type=Path,
     nargs=-1,
 )
@@ -20,7 +20,7 @@ from randex.schema import validate
     "-b",
     type=int,
     default=1,
-    help="Batch size",
+    help="Number of exams to be created",
 )
 @click.option(
     "--questions-per-folder",
@@ -28,7 +28,14 @@ from randex.schema import validate
     type=int,
     default=[1],
     multiple=True,
-    help="Number of questions per folder",
+    help="""
+    If the option appears once:
+    The same number of questions will be chosen from each folder.
+    If the option appears multiple times: 
+    The number of questions specified each time
+    will correspond to each folder in the order 
+    they are listed in the FOLDERS argument.
+    """,
 )
 @click.option(
     "--tex-path",
@@ -40,7 +47,7 @@ from randex.schema import validate
         dir_okay=False,
         path_type=Path,
     ),
-    help="Path to the yaml file that contains the exam configuration",
+    help="Path to the YAML file that contains the exam configuration",
 )
 @click.option(
     "--out-folder",
@@ -57,15 +64,18 @@ from randex.schema import validate
     help="Clean all latex compilation auxiliary files",
 )
 def main(
-    paths: Path,
+    folders: Path,
     questions_per_folder: list,
     batch_size: int,
     tex_path: Path,
     out_folder: Path,
     clean: bool,
 ) -> None:
-    """Run the main tasks of the script."""
-    cfg = {"folders": paths}
+    """
+    Create a batch of exams with randomly chosen multiple choice questions
+    from a list of FOLDERS.
+    """
+    cfg = {"folders": folders}
     cfg = validate(Pool.get_schema(), cfg)
     pool = Pool(**cfg)
 
