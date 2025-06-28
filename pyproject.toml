@@ -77,6 +77,7 @@ types-pyyaml = "^6.0.12.20250516"
 
 [tool.poetry.scripts]
 exams = "scripts.exams:main"
+randex-download-examples = "scripts.randex_download_examples:main"
 validate = "scripts.validate:main"
 
 [tool.poetry.urls]

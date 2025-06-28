@@ -6,6 +6,7 @@ temp/
 .DS_Store
 
 tmp/
+dist/
 **/answers.numbers
 
 .coverage
