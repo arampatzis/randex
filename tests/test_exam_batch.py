@@ -30,7 +30,7 @@ class TestExamBatchValidation:
         assert batch.n == 2
         assert len(batch.exams) == 0  # Not made yet
 
-    def test_validate_N_positive(self, sample_questions, sample_exam_template): # noqa: N802
+    def test_validate_N_positive(self, sample_questions, sample_exam_template):  # noqa: N802
         """Test that N must be positive."""
         questions_dict = OrderedDict({"folder1": sample_questions})
         question_set = QuestionSet(questions=questions_dict)

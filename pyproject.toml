@@ -40,14 +40,20 @@ override_SS05 = [
 
 [tool.poetry]
 authors = ["G. Arampatzis <gtarabat@gmail.com>"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: Other/Proprietary License",
+  "Operating System :: OS Independent"
+]
 description = "Create randomized multiple choice exams using latex."
+license = "CC BY-NC 4.0"
 name = "randex"
 packages = [
   {include = "randex"},
   {include = "scripts"}
 ]
 readme = "README.md"
-version = "0.1.0"
+version = "0.0.0"
 
 [tool.poetry.dependencies]
 cerberus = "^1.3.5"
@@ -72,6 +78,9 @@ types-pyyaml = "^6.0.12.20250516"
 [tool.poetry.scripts]
 exams = "scripts.exams:main"
 validate = "scripts.validate:main"
+
+[tool.poetry.urls]
+"Homepage" = "https://github.com/arampatzis/randex"
 
 [tool.poetry-dynamic-versioning]
 enable = true
