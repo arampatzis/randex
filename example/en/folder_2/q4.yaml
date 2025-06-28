@@ -9,7 +9,4 @@ answers:
 -   $\frac{10}{\sqrt{12}}$
 -   $\frac{100}{\sqrt{12}}$
 
-right_answers:
--   2
-
-points: 3
+right_answer: 2

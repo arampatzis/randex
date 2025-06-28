@@ -6,7 +6,4 @@ answers:
 -   "3"
 -   "4"
 
-right_answers:
--   1
-
-points: 1
+right_answer: 1

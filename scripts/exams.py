@@ -1,19 +1,22 @@
 """Script that creates a batch of randomized exams."""
+
+import shutil
+from datetime import datetime
 from pathlib import Path
 
 import click
 
-from randex.exam import ExamBatch, Pool, Tex
-from randex.schema import validate
+from randex.exam import ExamBatch, ExamTemplate, Pool, QuestionSet
 
 
 @click.command(
     context_settings={"help_option_names": ["--help"]},
 )
 @click.argument(
-    "folders",
-    type=Path,
-    nargs=-1,
+    "folder",
+    type=str,
+    nargs=1,
+    required=True,
 )
 @click.option(
     "--batch-size",
@@ -23,22 +26,23 @@ from randex.schema import validate
     help="Number of exams to be created",
 )
 @click.option(
-    "--questions-per-folder",
+    "--number_of_questions",
     "-n",
     type=int,
     default=[1],
     multiple=True,
     help="""
-    If the option appears once:
-    The same number of questions will be chosen from each folder.
-    If the option appears multiple times: 
-    The number of questions specified each time
-    will correspond to each folder in the order 
-    they are listed in the FOLDERS argument.
+    Specify how many questions to sample.
+
+    - Use once: sample total number of questions from all folders.
+    Example: -n 10
+
+    - Use multiple times: sample per-folder counts, in order.
+    Example: -n 5 -n 3   # 5 from folder 1, 3 from folder 2
     """,
 )
 @click.option(
-    "--tex-path",
+    "--template-tex-path",
     "-t",
     type=click.Path(
         exists=True,
@@ -47,14 +51,14 @@ from randex.schema import validate
         dir_okay=False,
         path_type=Path,
     ),
-    help="Path to the YAML file that contains the exam configuration",
+    required=True,
+    help="Path to the YAML file that contains the template for the exam configuration",
 )
 @click.option(
     "--out-folder",
     "-o",
     type=Path,
-    default="batch-exams",
-    help="Create the batch exams in this folder",
+    help="Create the batch exams in this folder (default: tmp_HH-MM-SS)",
 )
 @click.option(
     "--clean",
@@ -63,28 +67,70 @@ from randex.schema import validate
     default=False,
     help="Clean all latex compilation auxiliary files",
 )
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    default=False,
+    help="Overwrite the out-folder if it already exists (use with caution).",
+)
 def main(
-    folders: Path,
-    questions_per_folder: list,
+    folder: str,
+    number_of_questions: list | int,
     batch_size: int,
-    tex_path: Path,
-    out_folder: Path,
+    template_tex_path: Path,
+    out_folder: Path | None,
     clean: bool,
+    overwrite: bool,
 ) -> None:
     """
-    Create a batch of exams with randomly chosen multiple choice questions
-    from a list of FOLDERS.
+    Create a batch of exams with randomly chosen multiple choice questions.
+
+    The questions are loaded from a list of FOLDERS.
+
+    FOLDER: Path or quoted glob (e.g. "data/unit_*").
+
+    The questions are loaded from the FOLDERs and must follow the format:
+
+    question: What is $1+1$?
+    answers: ["0", "1", "2", "3"]
+    right_answer: 2
+
+    💡 Remember to wrap glob patterns in quotes to prevent shell expansion!
     """
-    cfg = {"folders": folders}
-    cfg = validate(Pool.get_schema(), cfg)
-    pool = Pool(**cfg)
+    if out_folder is None:
+        out_folder = Path(f"tmp_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
 
-    header = Tex.load(tex_path)
+    if out_folder.exists():
+        if not overwrite:
+            raise click.UsageError(
+                f"Output folder '{out_folder}' already exists.\n"
+                "Use --overwrite to remove it and continue.",
+            )
+        shutil.rmtree(out_folder)
 
-    b = ExamBatch(N=batch_size, pool=pool, tex=header, n=questions_per_folder)
+    if isinstance(number_of_questions, list | tuple) and len(number_of_questions) == 1:
+        number_of_questions = number_of_questions[0]
+
+    pool = Pool(folder=folder)
+
+    pool.print_questions()
+    questions_set = QuestionSet(questions=pool.questions)  # type: ignore[arg-type]
+    questions_set.sample(n=number_of_questions)
+    exam_template = ExamTemplate.load(template_tex_path)
+
+    b = ExamBatch(
+        N=batch_size,
+        questions_set=questions_set,
+        exam_template=exam_template,
+        n=number_of_questions,
+    )
 
     b.make_batch()
 
     b.compile(clean=clean, path=out_folder)
 
-    b.dump(out_folder / "exams.yaml")
+    b.save(out_folder / "exams.yaml")
+
+    b = ExamBatch.load(out_folder / "exams.yaml")
+
+    b.compile(clean=clean, path=out_folder)

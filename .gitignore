@@ -4,3 +4,6 @@ __pycache__/
 temp/
 
 .DS_Store
+
+tmp/
+**/answers.numbers

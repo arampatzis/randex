@@ -2,6 +2,42 @@
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
 
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+exclude = "(sandbox|docs)(/|\\|$)"
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+disable_error_code = ["name-defined"]
+ignore_missing_imports = true
+module = [
+  "chaospy",
+  "scipy.integrate",
+  "numpoly",
+  "sympy",
+  "sympy.plotting",
+  "torchvision"
+]
+
+[tool.numpydoc_validation]
+checks = [
+  "all",  # report on all checks, except the below
+  "EX01",
+  "SA01",
+  "ES01"
+]
+exclude = [
+  './sandbox/*.py$'
+]
+override_SS05 = [
+  # override SS05 to allow docstrings starting with these words
+  '^Process ',
+  '^Assess ',
+  '^Access '
+]
+
 [tool.poetry]
 authors = ["G. Arampatzis <gtarabat@gmail.com>"]
 description = "Create randomized multiple choice exams using latex."
@@ -19,6 +55,7 @@ click = "^8.1.7"
 pp-ez = "^0.2.0"
 pprintpp = "^0.4.0"
 pretty-errors = "^1.2.25"
+pydantic = "^2.11.7"
 pypdf = "^4.2.0"
 python = "^3.10"
 pyyaml = "^6.0.1"
@@ -26,47 +63,46 @@ typing-extensions = "^4.12.0"
 
 [tool.poetry.group.dev.dependencies]
 bpython = "^0.24"
+mypy = "^1.16.1"
 pre-commit = "^3.7.1"
+types-pyyaml = "^6.0.12.20250516"
 
 [tool.poetry.scripts]
 exams = "scripts.exams:main"
 validate = "scripts.validate:main"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+
 [tool.ruff]
+exclude = ["sandbox", "docs"]
 line-length = 88
 target-version = "py310"
 
 [tool.ruff.lint]
 ignore = [
-  # pydocstyle
-  "D104",
-  "D105",
-  "D107",
-  "D203",
-  "D205",
-  "D212",
-  "D400",
-  "D415",
   # pylint
   "PLR0913",
   "PLR0915",
+  "PLR2004",
   # ruff
   "RUF001",
-  "RUF015",
   # flake8-bandit
   "S101",
   "S102",
   "S602",
   "S603",
   "S604",
-  # mccabe
-  "C90",
-  # flake8-anootations
+  # flake8-annotations
   "ANN",
   # flake8-commas
   "COM819",
+  "COM812",
   #
+  "NPY002",
+  "B027",
   "PD901",
+  "PD011",
   "PERF203",
   "A002",
   "A003",
@@ -78,9 +114,14 @@ ignore = [
   "T201",
   "TRY003",
   "ISC001",
-  "N806"
+  "N806",
+  "N803",
+  "SLF001"
 ]
 select = ["ALL"]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

@@ -1,4 +1,4 @@
-question: What is $1-1$?
+question: What do you get when you subtract $1$ from $1$?
 
 answers:
 -   -2
@@ -6,7 +6,4 @@ answers:
 -   0
 -   1
 
-right_answers:
--   2
-
-points: 2
+right_answer: 2

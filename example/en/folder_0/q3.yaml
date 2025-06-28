@@ -1,4 +1,4 @@
-question: What is $7\times 8$?
+question: What do you get when you multiply $7$ and $8$?
 
 answers:
 -   56
@@ -6,7 +6,4 @@ answers:
 -   78
 -   15
 
-right_answers:
--   0
-
-points: 2
+right_answer: 0

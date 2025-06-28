@@ -1,4 +1,4 @@
-question: Which of the bellow is true for number 1?
+question: Which of the bellow is true for number $1$?
 
 answers:
 -   $1 > 0$
@@ -6,8 +6,4 @@ answers:
 -   $1 > 2$
 -   $1 < 2$
 
-right_answers:
--   0
--   3
-
-points: 2
+right_answer: 0

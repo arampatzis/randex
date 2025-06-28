@@ -42,7 +42,7 @@ prebegin: |
     \hsword{Βαθμός:}
     \htword{Σύνολο}
 
-    \pointpoints{μονάδα}{μονάδες} 
+    \pointpoints{μονάδα}{μονάδες}
     \pointsdroppedatright
 
 lhead: \lhead{Μαθηματικά}
