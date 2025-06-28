@@ -130,18 +130,21 @@ class TestPool:
         # Should show question counts
         assert "question" in str_repr.lower()
 
-    def test_print_questions(self, sample_question_files, capsys):
+    def test_print_questions(self, sample_question_files, caplog):
         """Test the print_questions method."""
+        import logging
+
+        caplog.set_level(logging.INFO)
+
         pool = Pool(folder=sample_question_files)
         pool.print_questions()
 
-        captured = capsys.readouterr()
+        # Should log something
+        assert len(caplog.records) > 0
 
-        # Should print something
-        assert len(captured.out) > 0
-
-        # Should contain question information
-        assert "question" in captured.out.lower()
+        # Should contain question information in logs
+        log_messages = " ".join(record.message for record in caplog.records)
+        assert "question" in log_messages.lower()
 
     def test_pool_with_empty_folder(self, temp_dir):
         """Test pool with folder containing no YAML files."""
