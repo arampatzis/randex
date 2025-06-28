@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from scripts.exams import main as exams_main
+from scripts.batch import main as exams_main
 
 
 class TestExamsScript:

@@ -299,6 +299,10 @@ class Pool:
 
     def print_questions(self) -> None:
         """Print all questions in the pool grouped by folder."""
+        from randex.cli import get_logger
+
+        logger = get_logger(__name__)
+
         first = True
         for folder, question_list in sorted(
             self.questions.items(),
@@ -308,18 +312,19 @@ class Pool:
                 continue
 
             if not first:
-                print("\n" + "-" * 60)
+                s = "\n" + "-" * 60
+                logger.info(s)
             first = False
 
-            print(f"\n\U0001f4c1 {folder}\n")
+            logger.info("\n\U0001f4c1 %s\n", folder)
             for i, question in enumerate(question_list):
-                print(f"  \U0001f4c4 Question {i + 1}")
-                print(f"    Q: {question.question}")
-                print("    Answers:")
+                logger.info("  \U0001f4c4 Question %d", i + 1)
+                logger.info("    Q: %s", question.question)
+                logger.info("    Answers:")
                 for j, ans in enumerate(question.answers):
                     mark = "✅" if j == question.right_answer else "  "
-                    print(f"      {mark} {j}. {ans}")
-                print("\n")
+                    logger.info("      %s %d. %s", mark, j, ans)
+                logger.info("\n")
 
 
 class QuestionSet(BaseModel):
