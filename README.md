@@ -1,7 +1,7 @@
 # Randex: Randomized Exams
 
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
-[![Test](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/test-and-coverage.yml?branch=main)](https://github.com/arampatzis/randex/actions/workflows/test-and-coverage.yml)
+[![Test](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/test.yml?branch=main)](https://github.com/arampatzis/randex/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/arampatzis/randex/branch/main/graph/badge.svg)](https://codecov.io/gh/arampatzis/randex)
 [![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/)
 
