@@ -6,10 +6,12 @@ from pathlib import Path
 
 import click
 
+from randex.cli import CustomCommand
 from randex.exam import Exam, ExamTemplate, Pool, QuestionSet
 
 
 @click.command(
+    cls=CustomCommand,
     context_settings={"help_option_names": ["--help"]},
 )
 @click.argument(

@@ -202,8 +202,14 @@ class Pool:
             matched = [p.resolve() for p in Path().glob(folder_input) if p.is_dir()]
             if not matched:
                 raise ValueError(
-                    f"'{folder_input}' was detected as a glob pattern but "
-                    "matched no folders. If this is a folder name, use a Path instead.",
+                    f"❌ No folders found matching the pattern: '{folder_input}'\n\n"
+                    f"💡 Suggestions:\n"
+                    f"   • Check if the path exists and contains folders\n"
+                    f"   • Verify the spelling (common mistake: 'example' vs 'examples')\n"  # noqa: E501
+                    f"   • Use quotes around the pattern to prevent shell expansion\n"
+                    f"   • Try listing the directory to see available folders\n\n"
+                    f"🔍 If '{folder_input}' is meant to be a literal folder name (not a pattern), "  # noqa: E501
+                    f"remove the special characters or use a Path object instead."
                 )
             return matched
 
