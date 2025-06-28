@@ -15,8 +15,17 @@ Multiple exams can be created at once.
 
 Randex requires Python version `3.10` or higher and `latexmk`.
 
+### Randex
+
+To install Randex, run the following command from the root folder of the project:
+
+```sh
+pip install randex
+```
 
 ### latexmk
+
+In order to compile the LaTeX files, you need to install `latexmk`,
 
 From [here](https://mg.readthedocs.io/latexmk.html):
 ```
@@ -26,32 +35,33 @@ Latexmk is a Perl script which you just have to run once and it does everything 
 and [here](https://www.cantab.net/users/johncollins/latexmk/)
 
 ```
-Latexmk is also available at CTAN at https://ctan.org/pkg/latexmk/, and is/will be in the TeXLive and MiKTeX distributions.
+Latexmk is also available at CTAN at https://ctan.org/pkg/latexmk/, and is/will be
+in the TeXLive and MiKTeX distributions.
 ```
 
 If you have already `Latex` installed in your system, you will most
 probably have already `latexmk` installed as well.
 
-### Randex
-
-To install Randex, run the following command from the root folder of the project:
-
-```sh
-pip install randex
-```
-
 ## Randex Commands
 
+### randex-download-examples
 
-### Validate
+To download the latest examples from GitHub, run the following command from the root
+folder of the project:
 
-This command validates a single question or all questions inside a folder. Execute:
+```sh
+randex-download-examples
+```
+
+### validate
+
+This command validates a single question or all questions under a folder. Execute:
 
 ```sh
 validate -t examples/en/template-exam.yaml -o tmp --overwrite "examples/en/folder_*"
 ```
 
-to validate all the questions inside the folder `examples/en` that contains subfolders
+to validate all the questions under the folder `examples/en` that contains subfolders
 with questions.
 It will use the configuration from the file `examples/en/template-exam.yaml`.
 The LaTeX compilation will run inside the `temp` folder.
@@ -67,7 +77,7 @@ validate --help
 
 to see the help message for the command.
 
-### Exams
+### exams
 
 To create a batch of exams with random questions, execute:
 
@@ -86,17 +96,9 @@ or multiple times, e.g., `-n 2 -n 1 -n 3 `, indicating the first folder will con
 contribute 3 questions.
 The `-b` option specifies the number of exams to create.
 
-### Examples
-
-You can find usage examples in the
-[`examples/`](https://github.com/arampatzis/randex/tree/main/examples)
-directory of this repository.
-
-
 ### Grade
 
 Not implemented yet.
-
 
 ## Randex Data Scheme
 
@@ -104,13 +106,16 @@ Randex requires two types of data files to create the exams.
 
 ### template-exam.yaml File
 
-The `template-exam.yaml` file is a `YAML` file that describes the LaTeX file that will produce the exam. It contains the following keys:
+The `template-exam.yaml` file is a `YAML` file that describes the LaTeX file that will
+produce the exam. It contains the following keys:
 
-- `documentclass` (optional): String with the documentclass command of the file. Only the `exam` class is supported. Default:
+- `documentclass` (optional): String with the documentclass command of the file.
+Only the `exam` class is supported. Default:
     ```latex
     \documentclass[11pt]{exam}
     ```
-- `prebegin` (optional): String containing everything that goes before the `\begin{document}` command. Default:
+- `prebegin` (optional): String containing everything that goes before the
+`\begin{document}` command. Default:
     ```latex
     \usepackage{amsmath}
     \usepackage{amssymb}
