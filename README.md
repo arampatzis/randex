@@ -1,5 +1,9 @@
 # Randex: Randomized Exams
 
+![Test & Coverage](https://github.com/arampatzis/randex/actions/workflows/test-and-coverage.yml/badge.svg)
+[![codecov](https://codecov.io/gh/arampatzis/randex/branch/main/graph/badge.svg)](https://codecov.io/gh/arampatzis/randex)
+[![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/)
+
 Randex is a library that creates exams by randomizing multiple-choice questions selected from a user-defined pool of questions. The final exam is generated as a LaTeX document and compiled into a PDF. Multiple exams can be created at once.
 
 ## Installation
@@ -128,3 +132,9 @@ This command will create 10 exams from 3 folders using the configuration from th
 ### Grade
 
 Not implemented yet.
+
+
+# License
+
+📄 Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).  
+Commercial use is prohibited without prior permission.
