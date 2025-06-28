@@ -61,7 +61,7 @@ repos:
 
 -   repo: local
     hooks:
-    -   id: pytest-cov-check
+    -   id: pytest
         name: Run pytest with coverage and fail under 90%
         entry: bash -c "pytest --cov=randex --cov=scripts && (coverage combine || true) && coverage report --fail-under=90"
         language: system

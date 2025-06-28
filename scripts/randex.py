@@ -115,6 +115,12 @@ def download_examples() -> None:
     default=False,
     help="Overwrite the out-folder if it already exists (use with caution).",
 )
+@click.option(
+    "--sequential",
+    is_flag=True,
+    default=False,
+    help="Use sequential compilation instead of parallel.",
+)
 def batch(
     folder: str,
     batch_size: int,
@@ -123,6 +129,7 @@ def batch(
     out_folder: Path | None,
     clean: bool,
     overwrite: bool,
+    sequential: bool,
 ) -> None:
     """
     Create a batch of exams with randomly chosen multiple choice questions.
@@ -148,6 +155,7 @@ def batch(
         out_folder=out_folder,
         clean=clean,
         overwrite=overwrite,
+        sequential=sequential,
     )
 
 

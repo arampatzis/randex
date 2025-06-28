@@ -987,6 +987,7 @@ class TestBatchValidationError:
                     out_folder=test_folder / "output",
                     clean=False,
                     overwrite=False,
+                    sequential=False,
                 )
 
         # Verify sys.exit was called due to ValidationError

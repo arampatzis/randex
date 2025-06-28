@@ -10,6 +10,7 @@ import logging
 import subprocess
 import time
 from collections import OrderedDict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import cached_property
@@ -17,7 +18,7 @@ from pathlib import Path
 from random import sample, shuffle
 
 import yaml
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 from pypdf import PdfWriter
 from typing_extensions import Self
 
@@ -792,6 +793,48 @@ class ExamBatch(BaseModel):
                     )
         return self
 
+    @staticmethod
+    def _compile_single_exam(
+        exam_data: dict,
+        exam_dir: Path,
+        clean: bool,
+    ) -> tuple[str, bool, str]:
+        """
+        Compile a single exam in a separate process.
+
+        Parameters
+        ----------
+        exam_data : dict
+            Serialized exam data
+        exam_dir : Path
+            Directory to compile the exam in
+        clean : bool
+            Whether to clean auxiliary files
+
+        Returns
+        -------
+        tuple[str, bool, str]
+            Tuple of (serial_number, success, error_message)
+        """
+        try:
+            exam_dir.mkdir(exist_ok=True, parents=True)
+
+            # Reconstruct the Exam object
+            from randex.exam import Exam
+
+            exam = Exam.model_validate(exam_data)
+            logger.info("Compiling exam %s", exam.sn)
+
+            result = exam.compile(exam_dir, clean)
+            pdf_path = exam_dir / "exam.pdf"
+
+            if result.returncode == 0 and pdf_path.exists():
+                return exam.sn, True, ""
+            return exam.sn, False, "LaTeX compilation failed or PDF not created"
+
+        except (ValidationError, subprocess.SubprocessError, OSError) as e:
+            return exam_data.get("sn", "unknown"), False, str(e)
+
     def make_batch(self) -> None:
         """Generate a batch of randomized exams."""
         serial_width = len(str(self.N))
@@ -816,23 +859,72 @@ class ExamBatch(BaseModel):
 
         logger.info("Successfully created %s exams", len(self.exams))
 
-    def compile(self, path: Path | str, clean: bool = False) -> None:
+    def _run_parallel_compilation(
+        self, path: Path, clean: bool
+    ) -> tuple[list[Path], list[str]]:
         """
-        Compile all exams and merge into a single PDF.
+        Run parallel compilation of all exams.
 
-        Parameters
-        ----------
-        path : Path | str
-            The path to the directory where the exams will be compiled.
-        clean : bool
-            Whether to clean the LaTeX auxiliary files.
+        Returns
+        -------
+        tuple[list[Path], list[str]]
+            Tuple of (pdf_files, failed_exams)
         """
-        if not self.exams:
-            raise RuntimeError("No exams to compile. Call make_batch() first.")
+        # Prepare compilation tasks
+        compilation_tasks = []
+        for exam in self.exams:
+            exam_dir = path / exam.sn
+            exam_data = exam.model_dump(mode="json")
+            compilation_tasks.append((exam_data, exam_dir, clean))
 
-        path = Path(path).resolve()
-        path.mkdir(exist_ok=True, parents=True)
+        logger.info("🚀 Starting parallel compilation of %d exams...", len(self.exams))
 
+        pdf_files = []
+        failed = []
+
+        with ProcessPoolExecutor() as executor:
+            future_to_sn = {
+                executor.submit(
+                    ExamBatch._compile_single_exam,
+                    exam_data,
+                    exam_dir,
+                    clean,
+                ): exam_data["sn"]
+                for exam_data, exam_dir, clean in compilation_tasks
+            }
+
+            for future in as_completed(future_to_sn):
+                sn = future_to_sn[future]
+                try:
+                    serial_number, success, error_msg = future.result()
+                    if success:
+                        pdf_path = path / serial_number / "exam.pdf"
+                        pdf_files.append(pdf_path)
+                        logger.debug("✅ Successfully compiled exam %s", serial_number)
+                    else:
+                        logger.error(
+                            "❌ Failed to compile exam %s: %s",
+                            serial_number,
+                            error_msg,
+                        )
+                        failed.append(serial_number)
+                except Exception:
+                    logger.exception("💥 Error compiling exam %s", sn)
+                    failed.append(sn)
+
+        return pdf_files, failed
+
+    def _run_sequential_compilation(
+        self, path: Path, clean: bool
+    ) -> tuple[list[Path], list[str]]:
+        """
+        Run sequential compilation of all exams (for backward compatibility).
+
+        Returns
+        -------
+        tuple[list[Path], list[str]]
+            Tuple of (pdf_files, failed_exams)
+        """
         pdf_files = []
         failed = []
 
@@ -847,18 +939,50 @@ class ExamBatch(BaseModel):
                 pdf_path = exam_dir / "exam.pdf"
                 if result.returncode == 0 and pdf_path.exists():
                     pdf_files.append(pdf_path)
+                    logger.debug("✅ Successfully compiled exam %s", exam.sn)
                 else:
-                    logger.error("PDF not created or failed for exam %s", exam.sn)
+                    logger.error("❌ PDF not created or failed for exam %s", exam.sn)
                     failed.append(exam.sn)
 
             except Exception:
-                logger.exception("Error compiling exam %s", exam.sn)
+                logger.exception("💥 Error compiling exam %s", exam.sn)
                 failed.append(exam.sn)
+
+        return pdf_files, failed
+
+    def compile(
+        self, path: Path | str, clean: bool = False, parallel: bool = True
+    ) -> None:
+        """
+        Compile all exams and merge into a single PDF.
+
+        Parameters
+        ----------
+        path : Path | str
+            The path to the directory where the exams will be compiled.
+        clean : bool
+            Whether to clean the LaTeX auxiliary files.
+        parallel : bool
+            Whether to use parallel compilation. Defaults to True.
+        """
+        if not self.exams:
+            raise RuntimeError("No exams to compile. Call make_batch() first.")
+
+        path = Path(path).resolve()
+        path.mkdir(exist_ok=True, parents=True)
+
+        if parallel:
+            pdf_files, failed = self._run_parallel_compilation(path, clean)
+        else:
+            pdf_files, failed = self._run_sequential_compilation(path, clean)
 
         if failed:
             logger.warning("Failed to compile exams: %s", ", ".join(failed))
         if not pdf_files:
             raise RuntimeError("No exams compiled successfully")
+
+        # Sort PDF files by serial number to ensure consistent ordering
+        pdf_files.sort(key=lambda pdf_path: pdf_path.parent.name)
 
         merged_path = path / "exams.pdf"
         merger = PdfWriter()
@@ -873,9 +997,11 @@ class ExamBatch(BaseModel):
             with open(merged_path, "wb") as f:
                 merger.write(f)
 
+            compilation_type = "parallel" if parallel else "sequential"
             logger.info(
-                "Successfully merged %s PDFs into %s",
+                "🎉 Successfully compiled %s exams %s and merged into %s",
                 len(pdf_files),
+                compilation_type,
                 merged_path,
             )
 

@@ -178,7 +178,7 @@ class TestExamBatchMethods:
         )
 
         batch.make_batch()
-        batch.compile(path=temp_dir)
+        batch.compile(path=temp_dir, parallel=False)
 
         # Should call subprocess for each exam
         assert mock_run.call_count >= 2
@@ -363,7 +363,7 @@ class TestExamBatchEdgeCases:
             )
 
             batch.make_batch()
-            batch.compile(path=temp_dir, clean=True)
+            batch.compile(path=temp_dir, clean=True, parallel=False)
 
             # Should call subprocess (compile + potential clean commands)
             assert mock_run.called
@@ -379,3 +379,262 @@ class TestExamBatchEdgeCases:
                 exam_template=sample_exam_template,
                 n=1,  # Cannot sample from empty set
             )
+
+    @patch("subprocess.run")
+    @patch("pathlib.Path.exists")
+    def test_parallel_compilation(
+        self, mock_exists, mock_run, sample_questions, sample_exam_template, temp_dir
+    ):
+        """Test parallel compilation functionality."""
+        # Test that the parallel path is exercised, but fall back to sequential for
+        # actual testing
+        mock_run.return_value = MagicMock(returncode=0)
+        mock_exists.return_value = True
+
+        questions_dict = OrderedDict({"folder1": sample_questions})
+        question_set = QuestionSet(questions=questions_dict)
+
+        batch = ExamBatch(
+            N=2,
+            questions_set=question_set,
+            exam_template=sample_exam_template,
+            n=2,
+        )
+
+        batch.make_batch()
+
+        # Test that the parallel=True parameter works by falling back to sequential
+        # when needed. This tests the code path without multiprocessing complications
+        with patch.object(batch, "_run_parallel_compilation") as mock_parallel:
+            # Mock parallel compilation to return results like sequential.
+            # No PDFs, no failures
+            mock_parallel.return_value = ([], [])
+
+            # This should not raise an error about no PDFs since we're mocking the
+            # parallel method.
+            with (
+                patch("randex.exam.PdfWriter"),
+                pytest.raises(RuntimeError, match="No exams compiled successfully"),
+            ):
+                batch.compile(path=temp_dir, parallel=True)
+
+            # Verify parallel compilation method was called
+            mock_parallel.assert_called_once()
+
+    def test_compile_single_exam_static_method(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """Test the _compile_single_exam static method."""
+        from randex.exam import ExamBatch
+
+        with (
+            patch("subprocess.run") as mock_run,
+            patch("pathlib.Path.exists") as mock_exists,
+        ):
+            mock_run.return_value = MagicMock(returncode=0)
+            mock_exists.return_value = True
+
+            questions_dict = OrderedDict({"folder1": sample_questions})
+            question_set = QuestionSet(questions=questions_dict)
+
+            batch = ExamBatch(
+                N=1,
+                questions_set=question_set,
+                exam_template=sample_exam_template,
+                n=2,
+            )
+            batch.make_batch()
+
+            # Test the static method directly
+            exam = batch.exams[0]
+            exam_data = exam.model_dump(mode="json")
+            exam_dir = temp_dir / "test_exam"
+
+            result = ExamBatch._compile_single_exam(exam_data, exam_dir, False)
+
+            # Should return success
+            serial_number, success, error_msg = result
+            assert success is True
+            assert serial_number == exam.sn
+            assert error_msg == ""
+
+    def test_compile_single_exam_failure(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """Test _compile_single_exam with compilation failure."""
+        from randex.exam import ExamBatch
+
+        with (
+            patch("subprocess.run") as mock_run,
+            patch("pathlib.Path.exists") as mock_exists,
+        ):
+            mock_run.return_value = MagicMock(returncode=1)  # Failure
+            mock_exists.return_value = False  # No PDF created
+
+            questions_dict = OrderedDict({"folder1": sample_questions})
+            question_set = QuestionSet(questions=questions_dict)
+
+            batch = ExamBatch(
+                N=1,
+                questions_set=question_set,
+                exam_template=sample_exam_template,
+                n=2,
+            )
+            batch.make_batch()
+
+            # Test the static method with failure
+            exam = batch.exams[0]
+            exam_data = exam.model_dump(mode="json")
+            exam_dir = temp_dir / "test_exam"
+
+            result = ExamBatch._compile_single_exam(exam_data, exam_dir, False)
+
+            # Should return failure
+            serial_number, success, error_msg = result
+            assert success is False
+            assert serial_number == exam.sn
+            assert "LaTeX compilation failed" in error_msg
+
+    def test_compile_single_exam_exception(self, temp_dir):
+        """Test _compile_single_exam with invalid data."""
+        from randex.exam import ExamBatch
+
+        # Test with invalid exam data
+        invalid_exam_data = {"invalid": "data"}
+        exam_dir = temp_dir / "test_exam"
+
+        result = ExamBatch._compile_single_exam(invalid_exam_data, exam_dir, False)
+
+        # Should return error
+        serial_number, success, error_msg = result
+        assert success is False
+        assert serial_number == "unknown"
+        assert error_msg  # Should have some error message
+
+    def test_pdf_sorting_functionality(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """Test that PDFs are sorted by serial number."""
+        with (
+            patch("subprocess.run") as mock_run,
+            patch("pathlib.Path.exists") as mock_exists,
+            patch("randex.exam.PdfWriter") as mock_pdf_writer,
+        ):
+            mock_run.return_value = MagicMock(returncode=0)
+            mock_exists.return_value = True
+            mock_writer_instance = MagicMock()
+            mock_pdf_writer.return_value = mock_writer_instance
+
+            questions_dict = OrderedDict({"folder1": sample_questions})
+            question_set = QuestionSet(questions=questions_dict)
+
+            batch = ExamBatch(
+                N=3,
+                questions_set=question_set,
+                exam_template=sample_exam_template,
+                n=2,
+            )
+
+            batch.make_batch()
+
+            # Create fake PDF directories in random order
+            (temp_dir / "2").mkdir()
+            (temp_dir / "0").mkdir()
+            (temp_dir / "1").mkdir()
+
+            # Create fake PDF files
+            (temp_dir / "2" / "exam.pdf").touch()
+            (temp_dir / "0" / "exam.pdf").touch()
+            (temp_dir / "1" / "exam.pdf").touch()
+
+            batch.compile(path=temp_dir, parallel=False)
+
+            # Verify PDFs were added in sorted order (0, 1, 2)
+            append_calls = mock_writer_instance.append.call_args_list
+            assert len(append_calls) == 3
+
+            # Check that PDFs were appended in sorted order by serial number
+            pdf_paths = [call[0][0] for call in append_calls]
+            # Extract serial numbers from paths to verify order
+            serial_numbers = [path.parent.name for path in pdf_paths]
+            assert serial_numbers == ["0", "1", "2"]
+
+    def test_run_parallel_compilation_method(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """
+        Test the _run_parallel_compilation method directly with ThreadPoolExecutor.
+
+        This approach avoids pickling issues.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+        from unittest.mock import patch
+
+        questions_dict = OrderedDict({"folder1": sample_questions})
+        question_set = QuestionSet(questions=questions_dict)
+
+        batch = ExamBatch(
+            N=2,
+            questions_set=question_set,
+            exam_template=sample_exam_template,
+            n=2,
+        )
+
+        batch.make_batch()
+
+        # Create directories and actual PDF files
+        for exam in batch.exams:
+            exam_dir = temp_dir / exam.sn
+            exam_dir.mkdir(parents=True, exist_ok=True)
+            pdf_file = exam_dir / "exam.pdf"
+            pdf_file.write_bytes(b"fake pdf content")
+
+        # Use ThreadPoolExecutor instead of ProcessPoolExecutor to avoid pickling issues
+        with (
+            patch("randex.exam.ProcessPoolExecutor", ThreadPoolExecutor),
+            patch("randex.exam.ExamBatch._compile_single_exam") as mock_compile,
+        ):
+
+            def mock_compile_func(exam_data, exam_dir, clean):
+                # Arguments used in function body
+                _ = exam_dir, clean
+                return exam_data["sn"], True, ""
+
+            mock_compile.side_effect = mock_compile_func
+
+            # Test the parallel compilation method directly
+            pdf_files, failed = batch._run_parallel_compilation(temp_dir, False)
+
+        assert len(pdf_files) == 2
+        assert len(failed) == 0
+        assert all(isinstance(pdf_path, Path) for pdf_path in pdf_files)
+
+    def test_run_sequential_compilation_method(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """Test the _run_sequential_compilation method directly."""
+        with (
+            patch("subprocess.run") as mock_run,
+            patch("pathlib.Path.exists") as mock_exists,
+        ):
+            mock_run.return_value = MagicMock(returncode=0)
+            mock_exists.return_value = True
+
+            questions_dict = OrderedDict({"folder1": sample_questions})
+            question_set = QuestionSet(questions=questions_dict)
+
+            batch = ExamBatch(
+                N=2,
+                questions_set=question_set,
+                exam_template=sample_exam_template,
+                n=2,
+            )
+
+            batch.make_batch()
+
+            # Test the sequential compilation method directly
+            pdf_files, failed = batch._run_sequential_compilation(temp_dir, False)
+
+            assert len(pdf_files) == 2
+            assert len(failed) == 0
+            assert all(isinstance(pdf_path, Path) for pdf_path in pdf_files)

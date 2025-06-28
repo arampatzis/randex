@@ -23,6 +23,7 @@ def main(
     out_folder: Path | None,
     clean: bool,
     overwrite: bool,
+    sequential: bool,
 ) -> None:
     """
     Create a batch of exams with randomly chosen multiple choice questions.
@@ -43,6 +44,8 @@ def main(
         Clean the output folder before creating the exams.
     overwrite : bool
         Overwrite the output folder if it already exists.
+    sequential : bool
+        Use sequential compilation instead of parallel.
     """
     if out_folder is None:
         out_folder = Path(f"tmp_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
@@ -87,13 +90,9 @@ def main(
     b.make_batch()
 
     logger.info("🔨 Compiling exams...")
-    b.compile(clean=clean, path=out_folder)
+    b.compile(clean=clean, path=out_folder, parallel=not sequential)
 
     logger.info("💾 Saving batch configuration to: %s", out_folder / "exams.yaml")
     b.save(out_folder / "exams.yaml")
-
-    logger.debug("🔄 Reloading and recompiling batch...")
-    b = ExamBatch.load(out_folder / "exams.yaml")
-    b.compile(clean=clean, path=out_folder)
 
     logger.info("✅ Batch creation completed successfully in: %s", out_folder)
