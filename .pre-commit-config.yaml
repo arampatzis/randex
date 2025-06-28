@@ -56,4 +56,4 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        exclude: ^(sandbox|docs)/
+        exclude: ^tests/

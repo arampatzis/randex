@@ -6,7 +6,7 @@ requires = ["poetry-core"]
 disallow_incomplete_defs = true
 disallow_untyped_calls = true
 disallow_untyped_defs = true
-exclude = "(sandbox|docs)(/|\\|$)"
+exclude = "^tests/"
 python_version = "3.11"
 
 [[tool.mypy.overrides]]
@@ -65,6 +65,8 @@ typing-extensions = "^4.12.0"
 bpython = "^0.24"
 mypy = "^1.16.1"
 pre-commit = "^3.7.1"
+pytest = "^8.4.1"
+pytest-cov = "^6.2.1"
 types-pyyaml = "^6.0.12.20250516"
 
 [tool.poetry.scripts]
@@ -73,6 +75,24 @@ validate = "scripts.validate:main"
 
 [tool.poetry-dynamic-versioning]
 enable = true
+
+[tool.pytest.ini_options]
+addopts = [
+  "-v",
+  "--tb=short",
+  "--strict-markers",
+  "--disable-warnings",
+  "--color=yes"
+]
+markers = [
+  "unit: Unit tests for individual components",
+  "integration: Integration tests for complete workflows",
+  "slow: Tests that take longer to run"
+]
+python_classes = ["Test*"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+testpaths = ["tests"]
 
 [tool.ruff]
 exclude = ["sandbox", "docs"]

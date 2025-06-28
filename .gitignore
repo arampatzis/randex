@@ -7,3 +7,5 @@ temp/
 
 tmp/
 **/answers.numbers
+
+.coverage
