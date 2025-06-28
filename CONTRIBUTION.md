@@ -81,14 +81,16 @@ poetry add --group dev pytest
 
 ### Scripts
 
-The project defines several CLI scripts in `pyproject.toml`:
-- `exams`: Main command for creating exam batches
-- `validate`: Command for validating questions
-- `randex-download-examples`: Download example files
+The project defines several CLI commands in `pyproject.toml`:
+- `randex batch`: Main command for creating exam batches
+- `randex validate`: Command for validating questions
+- `randex download-examples`: Download example files
+
+These commands are accessible after installing the package as subcommands of the main `randex` CLI.
 
 ## Testing
 
-We use pytest for testing with comprehensive test coverage.
+We use pytest for testing with comprehensive test coverage. The project maintains a **minimum 90% test coverage** requirement enforced by pre-commit hooks.
 
 ### Running Tests
 
@@ -97,7 +99,10 @@ We use pytest for testing with comprehensive test coverage.
 poetry run pytest
 
 # Run with coverage
-poetry run pytest --cov=randex
+poetry run pytest --cov=randex --cov=scripts
+
+# Run with coverage report
+poetry run pytest --cov=randex --cov=scripts --cov-report=term-missing
 
 # Run specific test types using markers
 poetry run pytest -m unit        # Unit tests
@@ -113,6 +118,13 @@ poetry run pytest tests/test_exam.py
 # Run specific test function
 poetry run pytest tests/test_exam.py::test_create_valid_exam
 ```
+
+### Coverage Requirements
+
+- **Minimum coverage**: 90% (enforced by pre-commit hooks)
+- Coverage includes both the `randex` package and `scripts` modules
+- Pull requests that reduce coverage below 90% will fail CI checks
+- New code should include comprehensive tests covering both success and error paths
 
 ### Test Organization
 
@@ -224,10 +236,14 @@ Pre-commit hooks run **automatically** on every `git commit`
 and will prevent the commit if any checks fail. The hooks include:
 - ruff linting and formatting
 - mypy type checking
-- Various file and syntax checks
+- pytest with 90% coverage requirement
+- Various file and syntax checks (YAML, TOML, etc.)
 
 If a hook fails, fix the issues and commit again.
-    Most formatting issues are automatically fixed by the hooks.
+Most formatting issues are automatically fixed by the hooks.
+
+**Important**: The pytest coverage hook enforces a minimum 90% test coverage.
+Commits that reduce coverage below this threshold will be rejected.
 
 If you want to run the pre-commit hooks manually, run:
 ```bash
@@ -345,26 +361,32 @@ For testing purposes, you can publish to Test PyPI first:
 randex/
 ├── randex/                 # Main package
 │   ├── __init__.py
+│   ├── cli.py             # CLI utilities and logging
 │   └── exam.py            # Core classes and functions
 ├── scripts/               # CLI scripts
-│   ├── exams.py          # Main exam generation script
-│   ├── validate.py       # Question validation script
-│   └── randex_download_examples.py
+│   ├── __init__.py
+│   ├── batch.py           # Batch exam generation script
+│   ├── validate.py        # Question validation script
+│   ├── randex.py          # Main CLI entry point
+│   └── download_examples.py # Download examples script
 ├── tests/                 # Test suite
-│   ├── conftest.py       # Test fixtures and configuration
-│   └── test_*.py         # Individual test modules
+│   ├── conftest.py        # Test fixtures and configuration
+│   └── test_*.py          # Individual test modules
 ├── examples/              # Example questions and templates
-│   ├── en/               # English examples
-│   └── gr/               # Greek examples
-├── pyproject.toml        # Project configuration
-├── poetry.lock           # Locked dependencies
-└── README.md             # Project documentation
+│   ├── en/                # English examples
+│   └── gr/                # Greek examples
+├── pyproject.toml         # Project configuration
+├── poetry.lock            # Locked dependencies
+├── .pre-commit-config.yaml # Pre-commit hooks configuration
+└── README.md              # Project documentation
 ```
 
 ### Key Files
 
 - **`pyproject.toml`**: Project configuration, dependencies, build settings
 - **`randex/exam.py`**: Main implementation with Question, Exam, Pool, and related classes
+- **`randex/cli.py`**: CLI utilities, logging setup, and command helpers
+- **`scripts/randex.py`**: Main CLI entry point with subcommands
 - **`tests/conftest.py`**: Shared test fixtures and configuration
 - **`scripts/`**: Command-line interface implementations
 
@@ -404,7 +426,8 @@ Add support for multiple question formats
 
 ## Getting Help
 
-- Check existing [issues](https://github.com/arampatzis/randex/issues) and [pull requests](https://github.com/arampatzis/randex/pulls)
+- Check existing [issues](https://github.com/arampatzis/randex/issues)
+and [pull requests](https://github.com/arampatzis/randex/pulls)
 - Read the [README.md](README.md) for usage instructions
 - Look at the test files for usage examples
 - Check the docstrings in the code for detailed API documentation

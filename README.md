@@ -44,57 +44,56 @@ probably have already `latexmk` installed as well.
 
 ## Randex Commands
 
-### randex-download-examples
+### randex download-examples
 
-To download the latest examples from GitHub, run the following command from the root
-folder of the project:
+To download the latest examples from GitHub, run the following command:
 
 ```sh
-randex-download-examples
+randex download-examples
 ```
 
-### validate
+### randex validate
 
 This command validates a single question or all questions under a folder. Execute:
 
 ```sh
-validate -t examples/en/template-exam.yaml -o tmp --overwrite "examples/en/folder_*"
+randex validate "examples/en/folder_*" -t examples/en/template-exam.yaml -o tmp --overwrite
 ```
 
 to validate all the questions under the folder `examples/en` that contains subfolders
 with questions.
 It will use the configuration from the file `examples/en/template-exam.yaml`.
-The LaTeX compilation will run inside the `temp` folder.
+The LaTeX compilation will run inside the `tmp` folder.
 The `--clean` option will remove all intermediate files created by LaTeX,
 and the `-a` flag will show the correct answers in the produced PDF.
-Open the PDF file inside `temp` to validate that all questions appear correctly.
+Open the PDF file inside `tmp` to validate that all questions appear correctly.
 
 Run:
 
 ```sh
-validate --help
+randex validate --help
 ```
 
 to see the help message for the command.
 
-### exams
+### randex batch
 
 To create a batch of exams with random questions, execute:
 
 ```sh
-exams -b 5 -n 2 -t examples/en/template-exam.yaml -o tmp --overwrite --clean "examples/en/folder_*"
+randex batch "examples/en/folder_*" 5 -n 2 -t examples/en/template-exam.yaml -o tmp --overwrite --clean
 ```
 
-This command will create 5 exams from using the questions inside  the 3 folders with
+This command will create 5 exams using the questions inside the 3 folders with
 names `folder_0`, `folder_1`, and `folder_2` using the configuration from the file
 `examples/en/template-exam.yaml`.
 The `--clean` option will remove all intermediate files created by LaTeX.
 The `-n` option specifies the number of questions randomly chosen from each folder.
 It can appear once, meaning all folders will contribute the same number of questions,
-or multiple times, e.g., `-n 2 -n 1 -n 3 `, indicating the first folder will contribute
+or multiple times, e.g., `-n 2 -n 1 -n 3`, indicating the first folder will contribute
 2 questions, the second folder will contribute 1 question, and the third folder will
 contribute 3 questions.
-The `-b` option specifies the number of exams to create.
+The batch size (5 in this example) specifies the number of exams to create.
 
 ### Grade
 
