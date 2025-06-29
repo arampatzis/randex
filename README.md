@@ -14,6 +14,46 @@ from a user-defined pool of questions.
 The final exam is generated as a LaTeX document and compiled into a PDF.
 Multiple exams can be created at once.
 
+## Quick Start
+
+Install `randex`:
+
+```sh
+pipx install randex
+```
+
+Download examples with questions:
+
+```sh
+randex download-examples
+```
+
+Validate the questions in the examples:
+
+```sh
+    randex validate examples/en/folder_* -t examples/en/template-exam.yaml -o tmp --overwrite
+```
+
+Create a batch of exams with random questions:
+
+```sh
+randex batch "examples/en/folder_*" 5 -n 2 -t examples/en/template-exam.yaml -o tmp --overwrite --clean
+```
+
+Create a csv file with random answers to the exams in the batch:
+
+```sh
+randex random-answers -e tmp/exams.yaml
+```
+
+Grade the exams in the batch:
+
+```sh
+randex grade -e tmp/exams.yaml -g tmp/answers.csv
+```
+
+
+
 ## Installation
 
 Randex requires Python version `3.10` or higher and `latexmk`.

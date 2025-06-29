@@ -1,6 +1,7 @@
 """Tests for the QuestionSet class."""
 
 from collections import OrderedDict
+from pathlib import Path
 
 import pytest
 
@@ -26,8 +27,6 @@ class TestQuestionSet:
 
     def test_fix_keys_validator(self, sample_questions):
         """Test that keys are converted from Path to string."""
-        from pathlib import Path
-
         # Create with Path keys
         questions_dict = {
             Path("folder1"): sample_questions[:2],

@@ -7,6 +7,11 @@ from urllib.error import URLError
 import pytest
 import yaml
 
+import cli.download_examples
+from cli.download_examples import main as download_examples_main
+from cli.grade import main as grade_main
+from cli.random_answers import main as random_answers_main
+from cli.validate import main as validate_main
 from randex.exam import ExamBatch, ExamTemplate, Pool, QuestionSet
 
 
@@ -16,33 +21,27 @@ class TestDownloadExamples:
     @patch("cli.download_examples.DEST_DIR")
     def test_download_examples_destination_exists(self, mock_dest):
         """Test when destination folder already exists."""
-        from cli.download_examples import main
-
         mock_dest.exists.return_value = True
 
         with pytest.raises(SystemExit) as exc_info:
-            main()
+            download_examples_main()
 
         assert exc_info.value.code == 1
 
     @patch("cli.download_examples.DEST_DIR")
     def test_download_examples_url_error(self, mock_dest):
         """Test URLError during download."""
-        from cli.download_examples import main
-
         mock_dest.exists.return_value = False
 
         with patch("urllib.request.urlopen", side_effect=URLError("Network error")):
             with pytest.raises(SystemExit) as exc_info:
-                main()
+                download_examples_main()
 
             assert exc_info.value.code == 1
 
     @patch("cli.download_examples.DEST_DIR")
     def test_download_examples_bad_zip(self, mock_dest):
         """Test BadZipFile error."""
-        from cli.download_examples import main
-
         mock_dest.exists.return_value = False
         mock_response = Mock()
         mock_response.read.return_value = b"not a zip file"
@@ -51,20 +50,18 @@ class TestDownloadExamples:
             mock_open.return_value.__enter__.return_value = mock_response
 
             with pytest.raises(SystemExit) as exc_info:
-                main()
+                download_examples_main()
 
             assert exc_info.value.code == 1
 
     @patch("cli.download_examples.DEST_DIR")
     def test_download_examples_os_error(self, mock_dest):
         """Test OSError during file operations."""
-        from cli.download_examples import main
-
         mock_dest.exists.return_value = False
 
         with patch("tempfile.mkdtemp", side_effect=OSError("Permission denied")):
             with pytest.raises(SystemExit) as exc_info:
-                main()
+                download_examples_main()
 
             assert exc_info.value.code == 1
 
@@ -72,8 +69,6 @@ class TestDownloadExamples:
         """Test that the module can be imported and main function exists."""
         # Simple test to ensure the module loads and main function exists
         try:
-            import cli.download_examples
-
             assert hasattr(cli.download_examples, "main")
             assert callable(cli.download_examples.main)
         except ImportError:
@@ -85,8 +80,6 @@ class TestCLIRandomAnswers:
 
     def test_random_answers_edge_cases(self, temp_dir):
         """Test edge cases in random_answers script."""
-        from cli.random_answers import main
-
         # Create sample batch
         folder = temp_dir / "questions"
         folder.mkdir()
@@ -118,7 +111,7 @@ class TestCLIRandomAnswers:
         batch.save(batch_file)
 
         # Test the random_answers script
-        main(batch_file)
+        random_answers_main(batch_file)
 
         # Check that the CSV file was created with all expected cases
         csv_file = temp_dir / "random_answers.csv"
@@ -136,8 +129,6 @@ class TestCLIValidate:
 
     def test_validate_edge_cases(self, temp_dir):
         """Test edge cases in validate script."""
-        from cli.validate import main
-
         # Create sample questions
         folder = temp_dir / "questions"
         folder.mkdir()
@@ -174,7 +165,7 @@ class TestCLIValidate:
             mock_run.return_value = MagicMock(returncode=0)
 
             # Test without overwrite (should pass)
-            main(
+            validate_main(
                 folder=str(folder),
                 template_tex_path=template_file,
                 out_folder=output_folder,
@@ -195,8 +186,6 @@ class TestCLIGrade:
 
     def test_grade_edge_cases(self, temp_dir):
         """Test edge cases in grade script."""
-        from cli.grade import main
-
         # Create sample batch and answers
         folder = temp_dir / "questions"
         folder.mkdir()
@@ -236,7 +225,7 @@ class TestCLIGrade:
             f.write("2,\n")  # Empty answer (None)
 
         # Test grade script with different parameters
-        main(batch_file, answers_file)
+        grade_main(batch_file, answers_file)
 
         # Test with custom negative score
-        main(batch_file, answers_file, negative_score=0.25)
+        grade_main(batch_file, answers_file, negative_score=0.25)

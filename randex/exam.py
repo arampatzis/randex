@@ -23,6 +23,8 @@ from pypdf import PdfWriter
 from tqdm import tqdm
 from typing_extensions import Self
 
+from randex.cli import get_logger
+
 logger = logging.getLogger(__name__)
 
 
@@ -301,8 +303,6 @@ class Pool:
 
     def print_questions(self) -> None:
         """Print all questions in the pool grouped by folder."""
-        from randex.cli import get_logger
-
         logger = get_logger(__name__)
 
         first = True
@@ -647,9 +647,8 @@ class Exam(BaseModel):
             Whether to shuffle the answers.
         """
         if shuffle_questions:
-            from random import shuffle
-
             shuffle(self.questions)
+
         if shuffle_answers:
             self.questions = [q.shuffle() for q in self.questions]
 
@@ -882,9 +881,6 @@ class ExamBatch(BaseModel):
         """
         try:
             exam_dir.mkdir(exist_ok=True, parents=True)
-
-            # Reconstruct the Exam object
-            from randex.exam import Exam
 
             exam = Exam.model_validate(exam_data)
 

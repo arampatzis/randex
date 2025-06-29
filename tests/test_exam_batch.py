@@ -1,6 +1,7 @@
 """Tests for the ExamBatch class."""
 
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -425,8 +426,6 @@ class TestExamBatchEdgeCases:
         self, sample_questions, sample_exam_template, temp_dir
     ):
         """Test the _compile_single_exam static method."""
-        from randex.exam import ExamBatch
-
         with (
             patch("subprocess.run") as mock_run,
             patch("pathlib.Path.exists") as mock_exists,
@@ -462,8 +461,6 @@ class TestExamBatchEdgeCases:
         self, sample_questions, sample_exam_template, temp_dir
     ):
         """Test _compile_single_exam with compilation failure."""
-        from randex.exam import ExamBatch
-
         with (
             patch("subprocess.run") as mock_run,
             patch("pathlib.Path.exists") as mock_exists,
@@ -497,8 +494,6 @@ class TestExamBatchEdgeCases:
 
     def test_compile_single_exam_exception(self, temp_dir):
         """Test _compile_single_exam with invalid data."""
-        from randex.exam import ExamBatch
-
         # Test with invalid exam data
         invalid_exam_data = {"invalid": "data"}
         exam_dir = temp_dir / "test_exam"
@@ -567,9 +562,6 @@ class TestExamBatchEdgeCases:
 
         This approach avoids pickling issues.
         """
-        from concurrent.futures import ThreadPoolExecutor
-        from unittest.mock import patch
-
         questions_dict = OrderedDict({"folder1": sample_questions})
         question_set = QuestionSet(questions=questions_dict)
 

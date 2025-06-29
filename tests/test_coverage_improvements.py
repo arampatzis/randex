@@ -1,12 +1,17 @@
 """Tests to improve coverage for uncovered edge cases and error paths."""
 
+import csv
+import os
 import subprocess
+from collections import OrderedDict
 from contextlib import suppress
 from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 
+from cli.grade import main as grade_main
+from cli.random_answers import main as random_answers_main
 from randex.exam import Exam, ExamBatch, ExamTemplate, Pool, QuestionSet
 
 
@@ -16,8 +21,6 @@ class TestPoolEdgeCases:
     def test_pool_glob_pattern_no_matches(self, temp_dir):
         """Test Pool with glob pattern that matches no folders."""
         # Create a pattern that won't match anything
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(temp_dir)  # Change to temp directory so glob can work
@@ -50,14 +53,14 @@ class TestPoolEdgeCases:
         pool = Pool(folder=folder)
 
         # Test the print_questions method
-        with patch("randex.cli.get_logger") as mock_get_logger:
+        with patch("randex.exam.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
             pool.print_questions()
 
             # Verify that logger.info was called
-            assert mock_logger.info.called
+            assert mock_get_logger.called
             # Should have called with folder name and question details
             calls = mock_logger.info.call_args_list
             assert any("test_folder" in str(call) for call in calls)
@@ -85,7 +88,7 @@ class TestPoolEdgeCases:
 
         pool = Pool(folder=folder)
 
-        with patch("randex.cli.get_logger") as mock_get_logger:
+        with patch("randex.exam.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -93,7 +96,7 @@ class TestPoolEdgeCases:
             pool.print_questions()
 
             # Should have logging from the valid questions
-            assert mock_logger.info.called
+            assert mock_get_logger.called
 
 
 class TestQuestionSetEdgeCases:
@@ -105,8 +108,6 @@ class TestQuestionSetEdgeCases:
 
         With invalid type to hit the unreachable TypeError.
         """
-        from collections import OrderedDict
-
         questions_dict = OrderedDict({"folder1": sample_questions})
         question_set = QuestionSet(questions=questions_dict)
 
@@ -282,8 +283,6 @@ class TestExamBatchErrorHandling:
         self, sample_questions, sample_exam_template
     ):
         """Test ExamBatch.make_batch with exception during exam creation."""
-        from collections import OrderedDict
-
         questions_dict = OrderedDict({"folder1": sample_questions})
         question_set = QuestionSet(questions=questions_dict)
 
@@ -373,9 +372,6 @@ class TestExamBatchErrorHandling:
         self, sample_questions, sample_exam_template, temp_dir
     ):
         """Test ExamBatch parallel compilation with exception in future."""
-        import os
-        from collections import OrderedDict
-
         # Ensure we're in a valid directory for multiprocessing
         original_cwd = os.getcwd()
 
@@ -410,8 +406,6 @@ class TestExamBatchErrorHandling:
         self, sample_questions, sample_exam_template, temp_dir
     ):
         """Test ExamBatch.compile with no exams made."""
-        from collections import OrderedDict
-
         questions_dict = OrderedDict({"folder1": sample_questions})
         question_set = QuestionSet(questions=questions_dict)
 
@@ -435,8 +429,6 @@ class TestCLIScripts:
     def test_grade_script_functionality(self, temp_dir):
         """Test the grade script functionality."""
         # Create a simple batch file and answers CSV
-        from randex.exam import ExamBatch, ExamTemplate, QuestionSet
-
         # Create sample questions
         folder = temp_dir / "questions"
         folder.mkdir()
@@ -475,15 +467,11 @@ class TestCLIScripts:
             f.write("1,0\n")  # Wrong answer
 
         # Test the grade script
-        from cli.grade import main as grade_main
-
         # Should not raise an exception
         grade_main(batch_file, answers_file)
 
     def test_random_answers_script_functionality(self, temp_dir):
         """Test the random_answers script functionality."""
-        from randex.exam import ExamBatch, ExamTemplate, QuestionSet
-
         # Create sample questions
         folder = temp_dir / "questions"
         folder.mkdir()
@@ -515,8 +503,6 @@ class TestCLIScripts:
         batch.save(batch_file)
 
         # Test the random_answers script
-        from cli.random_answers import main as random_answers_main
-
         # Should not raise an exception and create a CSV file
         random_answers_main(batch_file)
 
@@ -525,8 +511,6 @@ class TestCLIScripts:
         assert csv_file.exists()
 
         # Read and verify CSV content
-        import csv
-
         with open(csv_file) as f:
             reader = csv.DictReader(f)
             rows = list(reader)

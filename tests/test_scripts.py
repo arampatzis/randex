@@ -1,6 +1,9 @@
 """Tests for the command-line CLI modules."""
 
+import importlib.metadata
+import subprocess
 import sys
+from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
@@ -8,9 +11,15 @@ from urllib.error import URLError
 
 import pytest
 from click.testing import CliRunner
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError, field_validator
 
+import cli.randex
+from cli.batch import main as batch_main
+from cli.download_examples import DEST_DIR, GITHUB_ZIP_URL
+from cli.download_examples import main as download_main
 from cli.randex import cli
+from cli.validate import main as validate_main
+from randex.exam import Question
 
 
 class TestMainCLI:
@@ -82,14 +91,10 @@ class TestDownloadExamplesScript:
     def test_download_examples_import_and_main_function(self) -> None:
         """Test that download_examples main function can be imported and called."""
         # Test importing the main function to get coverage on the function definition
-        from cli.download_examples import main as download_main
-
         # Test that it's a callable function
         assert callable(download_main)
 
         # Test DEST_DIR and GITHUB_ZIP_URL constants are defined
-        from cli.download_examples import DEST_DIR, GITHUB_ZIP_URL
-
         assert Path("examples") == DEST_DIR
         assert "github.com" in GITHUB_ZIP_URL
 
@@ -133,8 +138,6 @@ class TestBatchScript:
         # Mock the Pool and ExamBatch classes
         mock_pool = MagicMock()
         # Create mock questions for the pool
-        from randex.exam import Question
-
         mock_questions = [
             Question(
                 question="Test 1?",
@@ -189,8 +192,6 @@ class TestBatchScript:
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
-            from randex.exam import Question
-
             mock_questions = [
                 Question(
                     question="Test 1?",
@@ -241,8 +242,6 @@ class TestBatchScript:
         ):
             mock_pool = MagicMock()
             # Create mock questions for both folders
-            from randex.exam import Question
-
             mock_questions_1 = [
                 Question(
                     question="Test 1?",
@@ -307,8 +306,6 @@ class TestBatchScript:
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
-            from randex.exam import Question
-
             mock_questions = [
                 Question(
                     question="Test 1?",
@@ -359,8 +356,6 @@ class TestBatchScript:
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
-            from randex.exam import Question
-
             mock_questions = [
                 Question(
                     question="Test 1?",
@@ -429,8 +424,6 @@ class TestBatchScript:
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
-            from randex.exam import Question
-
             mock_questions = [
                 Question(
                     question="Test 1?",
@@ -500,8 +493,6 @@ class TestValidateScript:
     def test_validate_script_import(self) -> None:
         """Test that validate script can be imported."""
         try:
-            from cli.validate import main as validate_main
-
             assert callable(validate_main)
         except ImportError:
             pytest.skip("Validate script not available")
@@ -527,8 +518,6 @@ class TestValidateScript:
         """Test basic validate script execution."""
         # Mock the classes
         mock_pool = MagicMock()
-        from randex.exam import Question
-
         mock_questions = [
             Question(
                 question="Test 1?",
@@ -625,8 +614,6 @@ class TestValidateScript:
         """
         # Mock the classes
         mock_pool = MagicMock()
-        from randex.exam import Question
-
         mock_questions = [
             Question(
                 question="Test 1?",
@@ -654,8 +641,6 @@ class TestValidateScript:
         mock_template_class.load.return_value = mock_template
 
         # Import and call the main function directly with None output folder
-        from cli.validate import main as validate_main
-
         with TemporaryDirectory() as temp_dir:
             test_folder = Path(temp_dir) / "test_folder"
             test_folder.mkdir()
@@ -693,7 +678,6 @@ class TestValidateScript:
         """
         # Mock the classes
         mock_pool = MagicMock()
-        from randex.exam import Question
 
         mock_questions = [
             Question(
@@ -761,8 +745,6 @@ class TestValidateScript:
         """Test validate script with compilation producing stdout and stderr."""
         # Mock the classes
         mock_pool = MagicMock()
-        from randex.exam import Question
-
         mock_questions = [
             Question(
                 question="Test 1?",
@@ -827,8 +809,6 @@ class TestValidateScript:
         """Test validate script with compilation failure."""
         # Mock the classes
         mock_pool = MagicMock()
-        from randex.exam import Question
-
         mock_questions = [
             Question(
                 question="Test 1?",
@@ -889,14 +869,12 @@ class TestRandexVersionHandling:
         # Mock importlib.metadata.version to raise PackageNotFoundError
         with patch("importlib.metadata.version") as mock_version:
             # Need to import the exception class first
-            import importlib.metadata
-
             mock_version.side_effect = importlib.metadata.PackageNotFoundError(
                 "randex not found"
             )
 
             # Now import the module, which should trigger the except block
-            import cli.randex
+            import cli.randex  # noqa: PLC0415
 
             # Should fall back to "0.0.0"
             assert cli.randex.__version__ == "0.0.0"
@@ -904,9 +882,6 @@ class TestRandexVersionHandling:
     def test_cli_main_execution(self) -> None:
         """Test CLI entry point when called as main."""
         # Test the main block by running the module directly
-        import subprocess
-        import sys
-
         # Run the randex script module directly to trigger the main block
         result = subprocess.run(
             [sys.executable, "-m", "cli.randex", "--help"],
@@ -951,7 +926,6 @@ class TestBatchValidationError:
 
         # Create a proper ValidationError by trying to validate invalid data
         try:
-            from pydantic import BaseModel, field_validator
 
             class DummyModel(BaseModel):
                 test_field: str
@@ -966,8 +940,6 @@ class TestBatchValidationError:
             mock_batch_class.side_effect = validation_error
 
         # Import and run the main function
-        from cli.batch import main as batch_main
-
         # Call the main function directly with required arguments to trigger the
         # ValidationError
         with TemporaryDirectory() as temp_dir:
@@ -976,8 +948,6 @@ class TestBatchValidationError:
 
             # This should raise ValidationError which gets caught and calls sys.exit(1)
             # Since sys.exit is mocked, execution continues and hits UnboundLocalError
-            from contextlib import suppress
-
             with suppress(UnboundLocalError):
                 batch_main(
                     folder=str(test_folder),
@@ -999,7 +969,6 @@ class TestBatchValidationErrorHelper:
 
     def test_validation_error_creation(self) -> None:
         """Test that we can create ValidationError for testing."""
-        from pydantic import BaseModel, field_validator
 
         class TestModel(BaseModel):
             test_field: str

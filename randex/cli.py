@@ -1,5 +1,6 @@
 """Shared CLI utilities for randex CLI modules."""
 
+import inspect
 import logging
 import sys
 
@@ -66,8 +67,6 @@ def get_logger(name: str | None = None) -> logging.Logger:
     """
     if name is None:
         # Get the calling module name
-        import inspect
-
         frame = inspect.currentframe()
         if frame and frame.f_back:
             name = frame.f_back.f_globals.get("__name__", "randex")

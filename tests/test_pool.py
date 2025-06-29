@@ -1,5 +1,6 @@
 """Tests for the Pool class."""
 
+import logging
 from unittest.mock import patch
 
 import pytest
@@ -132,8 +133,6 @@ class TestPool:
 
     def test_print_questions(self, sample_question_files, caplog):
         """Test the print_questions method."""
-        import logging
-
         caplog.set_level(logging.INFO)
 
         pool = Pool(folder=sample_question_files)

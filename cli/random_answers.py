@@ -1,6 +1,7 @@
 """Generate random answers for the exams in the exams_path."""
 
 import csv
+import random
 from pathlib import Path
 from typing import cast
 
@@ -20,8 +21,6 @@ def main(exams_path: Path) -> None:
         The path to the exams YAML file.
     """
     batch = ExamBatch.load(exams_path)
-
-    import random
 
     # Generate random answers for each exam
     all_answers: dict[int, list[int | None]] = {}

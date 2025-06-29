@@ -3,14 +3,14 @@
 import sys
 from unittest.mock import patch
 
+import randex
+
 
 class TestPackageVersion:
     """Test package version handling."""
 
     def test_version_available(self) -> None:
         """Test that version is available when package is installed."""
-        import randex
-
         # Version should be available
         assert hasattr(randex, "__version__")
         assert isinstance(randex.__version__, str)
@@ -27,7 +27,7 @@ class TestPackageVersion:
             "importlib.metadata.version", side_effect=ImportError("Package not found")
         ):
             # Now import randex, which should trigger the except block
-            import randex
+            import randex  # noqa: PLC0415
 
             # Should fall back to "0.0.0"
             assert randex.__version__ == "0.0.0"
