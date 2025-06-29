@@ -2,6 +2,34 @@
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
 
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:"
+]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.run]
+branch = true
+omit = [
+  "tests/*",
+  "*/tests/*",
+  "*/test_*",
+  "test_*",
+  "*/__pycache__/*",
+  "*/site-packages/*"
+]
+source = ["randex", "cli"]
+
 [tool.mypy]
 disallow_incomplete_defs = true
 disallow_untyped_calls = true
@@ -65,6 +93,7 @@ pydantic = "^2.11.7"
 pypdf = "^4.2.0"
 python = "^3.10"
 pyyaml = "^6.0.1"
+tqdm = "^4.67.1"
 typing-extensions = "^4.12.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -73,6 +102,7 @@ mypy = "^1.16.1"
 pre-commit = "^3.7.1"
 pytest = "^8.4.1"
 pytest-cov = "^6.2.1"
+tqdm-stubs = "^0.2.1"
 types-pyyaml = "^6.0.12.20250516"
 
 [tool.poetry.scripts]
@@ -145,7 +175,8 @@ ignore = [
   "ISC001",
   "N806",
   "N803",
-  "SLF001"
+  "SLF001",
+  "S311"
 ]
 select = ["ALL"]
 

@@ -20,6 +20,7 @@ from random import sample, shuffle
 import yaml
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 from pypdf import PdfWriter
+from tqdm import tqdm
 from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
@@ -511,28 +512,31 @@ class Exam(BaseModel):
 
     exam_template: ExamTemplate
     show_answers: bool = False
-    sn: str = "0"
+    sn: str | int = "0"
     questions: list[Question]
 
     @field_validator("sn")
     @classmethod
-    def validate_sn_format(cls, v: str) -> str:
+    def validate_sn_format(cls, v: str | int) -> str:
         """
         Validate the format of the serial number.
 
         Parameters
         ----------
-        v : str
+        v : str | int
             The serial number to validate.
 
         Returns
         -------
-        str:
+        str | int:
             The serial number.
         """
-        if not v.isdigit():
+        if isinstance(v, str) and not v.isdigit():
             raise ValueError("Serial number (sn) must be numeric.")
-        return v
+        if int(v) < 0:
+            raise ValueError("Serial number (sn) must be positive.")
+
+        return str(v)
 
     @field_validator("questions")
     @classmethod
@@ -572,6 +576,61 @@ class Exam(BaseModel):
             seen.add(key)
         return self
 
+    @property
+    def right_answers(self) -> list[int]:
+        """
+        Return the right answers of the exam.
+
+        Returns
+        -------
+        list[int]:
+            The right answers of the exam.
+        """
+        return [q.right_answer for q in self.questions]
+
+    def grade(
+        self,
+        answers: list[int | None],
+        negative_score: float | None = None,
+    ) -> float:
+        """
+        Grade the exam.
+
+        Parameters
+        ----------
+        answers : list[int | None]
+            The answers to grade.
+        negative_score : float | None
+            The negative score for each wrong answer.
+            If None, the negative score is 1.
+
+        Returns
+        -------
+        float:
+            The score of the exam.
+        """
+        if negative_score is not None and (negative_score < 0 or negative_score > 1):
+            raise ValueError("Negative score must be between 0 and 1")
+
+        if len(answers) != len(self.right_answers):
+            raise ValueError(
+                f"Expected {len(self.right_answers)} answers, but got {len(answers)}"
+            )
+
+        score = 0.0
+        for q, r, g in zip(self.questions, self.right_answers, answers, strict=False):
+            if r == g:
+                score += 1
+            elif g is None:
+                score += 0
+            else:
+                if negative_score is None:
+                    score -= 1 / (len(q.answers) - 1)
+                    continue
+                score -= negative_score
+
+        return round(score, 1)
+
     def apply_shuffling(
         self,
         shuffle_questions: bool = False,
@@ -598,6 +657,7 @@ class Exam(BaseModel):
         self,
         path: Path | str | None,
         clean: bool = False,
+        verbose: bool = True,
     ) -> subprocess.CompletedProcess:
         """
         Compile the LaTeX exam document to PDF.
@@ -608,6 +668,8 @@ class Exam(BaseModel):
             The path to the directory where the exams will be compiled.
         clean : bool
             Whether to clean the LaTeX auxiliary files.
+        verbose : bool
+            Whether to log compilation messages. Defaults to True.
 
         Returns
         -------
@@ -626,7 +688,8 @@ class Exam(BaseModel):
             f.write(str(self))
 
         cmd = f"latexmk -pdf -cd {tex_file} -interaction=nonstopmode -f"
-        logger.info("Compiling: %s", cmd)
+        if verbose:
+            logger.info("Compiling: %s", cmd)
 
         try:
             result = subprocess.run(
@@ -637,8 +700,9 @@ class Exam(BaseModel):
                 timeout=3600,
             )
             if result.returncode != 0:
-                logger.error("LaTeX compilation failed: %s", result.stderr)
-            else:
+                if verbose:
+                    logger.error("LaTeX compilation failed: %s", result.stderr)
+            elif verbose:
                 logger.info("Compilation succeeded")
 
         except subprocess.TimeoutExpired as e:
@@ -712,7 +776,7 @@ class ExamBatch(BaseModel):
     questions_set: QuestionSet
     exam_template: ExamTemplate
     n: list[int] | tuple[int, ...] | int = field(default=1)
-    exams: list[Exam] = field(default_factory=list)
+    exams: dict[int, Exam] = field(default_factory=dict)
     show_answers: bool = False
 
     @field_validator("N")
@@ -823,17 +887,16 @@ class ExamBatch(BaseModel):
             from randex.exam import Exam
 
             exam = Exam.model_validate(exam_data)
-            logger.info("Compiling exam %s", exam.sn)
 
-            result = exam.compile(exam_dir, clean)
+            result = exam.compile(exam_dir, clean, verbose=False)
             pdf_path = exam_dir / "exam.pdf"
 
             if result.returncode == 0 and pdf_path.exists():
-                return exam.sn, True, ""
-            return exam.sn, False, "LaTeX compilation failed or PDF not created"
+                return str(exam.sn), True, ""
+            return str(exam.sn), False, "LaTeX compilation failed or PDF not created"
 
         except (ValidationError, subprocess.SubprocessError, OSError) as e:
-            return exam_data.get("sn", "unknown"), False, str(e)
+            return str(exam_data.get("sn", "unknown")), False, str(e)
 
     def make_batch(self) -> None:
         """Generate a batch of randomized exams."""
@@ -849,7 +912,7 @@ class ExamBatch(BaseModel):
                     questions=questions,
                     show_answers=self.show_answers,
                 )
-                self.exams.append(exam)
+                self.exams[i] = exam
                 logger.debug(
                     "Created exam %s with %s questions", serial_number, len(questions)
                 )
@@ -857,7 +920,42 @@ class ExamBatch(BaseModel):
                 logger.exception("Failed to create exam %s", i)
                 raise RuntimeError(f"Failed to create exam {i}") from e
 
-        logger.info("Successfully created %s exams", len(self.exams))
+        logger.info("Successfully created %s exams", len(self.exams.values()))
+
+    def _handle_compilation_result(
+        self,
+        sn: str,
+        success: bool,
+        path: Path,
+        pdf_files: list[Path],
+        failed: list[str],
+        error_msg: str = "",
+    ) -> None:
+        """
+        Handle the result of a single exam compilation.
+
+        Parameters
+        ----------
+        sn : str
+            The serial number of the exam
+        success : bool
+            Whether the compilation was successful
+        path : Path
+            The base compilation path
+        pdf_files : list[Path]
+            List to append successful PDF paths to
+        failed : list[str]
+            List to append failed serial numbers to
+        error_msg : str
+            Error message if compilation failed
+        """
+        if success:
+            pdf_path = path / sn / "exam.pdf"
+            pdf_files.append(pdf_path)
+            logger.debug("✅ Successfully compiled exam %s", sn)
+        else:
+            logger.error("❌ Failed to compile exam %s: %s", sn, error_msg)
+            failed.append(sn)
 
     def _run_parallel_compilation(
         self, path: Path, clean: bool
@@ -872,15 +970,17 @@ class ExamBatch(BaseModel):
         """
         # Prepare compilation tasks
         compilation_tasks = []
-        for exam in self.exams:
-            exam_dir = path / exam.sn
+        for exam in self.exams.values():
+            exam_dir = path / str(exam.sn)
             exam_data = exam.model_dump(mode="json")
             compilation_tasks.append((exam_data, exam_dir, clean))
 
-        logger.info("🚀 Starting parallel compilation of %d exams...", len(self.exams))
+        logger.info(
+            "🚀 Starting parallel compilation of %d exams...", len(self.exams.values())
+        )
 
-        pdf_files = []
-        failed = []
+        pdf_files: list[Path] = []
+        failed: list[str] = []
 
         with ProcessPoolExecutor() as executor:
             future_to_sn = {
@@ -889,28 +989,41 @@ class ExamBatch(BaseModel):
                     exam_data,
                     exam_dir,
                     clean,
-                ): exam_data["sn"]
+                ): str(exam_data["sn"])
                 for exam_data, exam_dir, clean in compilation_tasks
             }
 
-            for future in as_completed(future_to_sn):
-                sn = future_to_sn[future]
-                try:
-                    serial_number, success, error_msg = future.result()
-                    if success:
-                        pdf_path = path / serial_number / "exam.pdf"
-                        pdf_files.append(pdf_path)
-                        logger.debug("✅ Successfully compiled exam %s", serial_number)
-                    else:
-                        logger.error(
-                            "❌ Failed to compile exam %s: %s",
-                            serial_number,
-                            error_msg,
+            # Progress bar for parallel compilation
+            with tqdm(
+                total=len(future_to_sn),
+                desc="📄 Compiling exams",
+                unit="exam",
+                bar_format=(
+                    "{l_bar}{bar}| {n_fmt}/{total_fmt} "
+                    "[{elapsed}<{remaining}, {rate_fmt}]"
+                ),
+            ) as pbar:
+                for future in as_completed(future_to_sn):
+                    sn = future_to_sn[future]
+                    try:
+                        serial_number, success, error_msg = future.result()
+                        self._handle_compilation_result(
+                            serial_number, success, path, pdf_files, failed, error_msg
                         )
-                        failed.append(serial_number)
-                except Exception:
-                    logger.exception("💥 Error compiling exam %s", sn)
-                    failed.append(sn)
+                        # Update progress bar description with current status
+                        success_count = len(pdf_files)
+                        failed_count = len(failed)
+                        pbar.set_postfix(
+                            {"Success": success_count, "Failed": failed_count}
+                        )
+                    except Exception:
+                        logger.exception("💥 Error compiling exam %s", sn)
+                        failed.append(sn)
+                        pbar.set_postfix(
+                            {"Success": len(pdf_files), "Failed": len(failed)}
+                        )
+                    finally:
+                        pbar.update(1)
 
         return pdf_files, failed
 
@@ -925,28 +1038,45 @@ class ExamBatch(BaseModel):
         tuple[list[Path], list[str]]
             Tuple of (pdf_files, failed_exams)
         """
-        pdf_files = []
-        failed = []
+        pdf_files: list[Path] = []
+        failed: list[str] = []
 
-        for exam in self.exams:
-            exam_dir = path / exam.sn
-            exam_dir.mkdir(exist_ok=True, parents=True)
+        # Progress bar for sequential compilation
+        with tqdm(
+            total=len(self.exams),
+            desc="📄 Compiling exams",
+            unit="exam",
+            bar_format=(
+                "{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]"
+            ),
+        ) as pbar:
+            for exam in self.exams.values():
+                exam_dir = path / str(exam.sn)
+                exam_dir.mkdir(exist_ok=True, parents=True)
 
-            try:
-                logger.info("Compiling exam %s", exam.sn)
-                result = exam.compile(exam_dir, clean)
+                try:
+                    pbar.set_description(f"📄 Compiling exam {exam.sn!s}")
+                    result = exam.compile(exam_dir, clean, verbose=False)
 
-                pdf_path = exam_dir / "exam.pdf"
-                if result.returncode == 0 and pdf_path.exists():
-                    pdf_files.append(pdf_path)
-                    logger.debug("✅ Successfully compiled exam %s", exam.sn)
-                else:
-                    logger.error("❌ PDF not created or failed for exam %s", exam.sn)
-                    failed.append(exam.sn)
+                    pdf_path = exam_dir / "exam.pdf"
+                    success = result.returncode == 0 and pdf_path.exists()
+                    error_msg = (
+                        "PDF not created or LaTeX compilation failed"
+                        if not success
+                        else ""
+                    )
 
-            except Exception:
-                logger.exception("💥 Error compiling exam %s", exam.sn)
-                failed.append(exam.sn)
+                    self._handle_compilation_result(
+                        str(exam.sn), success, path, pdf_files, failed, error_msg
+                    )
+
+                except Exception:
+                    logger.exception("💥 Error compiling exam %s", str(exam.sn))
+                    failed.append(str(exam.sn))
+
+                # Update progress bar with current status
+                pbar.set_postfix({"Success": len(pdf_files), "Failed": len(failed)})
+                pbar.update(1)
 
         return pdf_files, failed
 

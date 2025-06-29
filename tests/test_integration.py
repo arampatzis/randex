@@ -49,7 +49,7 @@ class TestCompleteWorkflow:
 
         # Verify batch was created
         assert len(batch.exams) == 2
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             assert len(exam.questions) == 2
             assert exam.exam_template == exam_template
 
@@ -93,7 +93,7 @@ class TestCompleteWorkflow:
 
         # Verify each exam has questions from different folders
         assert len(batch.exams) == 2
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             assert len(exam.questions) == num_folders
 
     def test_workflow_with_shuffling(
@@ -116,7 +116,7 @@ class TestCompleteWorkflow:
         batch.make_batch()
 
         # Apply shuffling to each exam
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             original_questions = [q.question for q in exam.questions]
             exam.questions[0].answers[exam.questions[0].right_answer]
 
@@ -247,7 +247,7 @@ class TestCompleteWorkflow:
 
         # Verify large batch
         assert len(batch.exams) == 10
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             assert len(exam.questions) == 5
             # Each exam should have unique questions
             question_texts = [q.question for q in exam.questions]
@@ -283,6 +283,8 @@ class TestCompleteWorkflow:
         assert len(batch1.exams) == len(batch2.exams)
         assert batch1.N == batch2.N
 
-        for exam1, exam2 in zip(batch1.exams, batch2.exams, strict=False):
+        for exam1, exam2 in zip(
+            batch1.exams.values(), batch2.exams.values(), strict=False
+        ):
             assert len(exam1.questions) == len(exam2.questions)
             # Questions might be different due to randomness, but structure should match

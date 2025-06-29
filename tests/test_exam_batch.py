@@ -125,7 +125,7 @@ class TestExamBatchMethods:
         assert len(batch.exams) == 2
 
         # Each exam should have 2 questions
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             assert len(exam.questions) == 2
             assert exam.exam_template == sample_exam_template
 
@@ -154,7 +154,7 @@ class TestExamBatchMethods:
         assert len(batch.exams) == 2
 
         # Each exam should have 2 questions (1 from each folder)
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             assert len(exam.questions) == 2
 
     @patch("subprocess.run")
@@ -254,7 +254,7 @@ class TestExamBatchEdgeCases:
         batch.make_batch()
 
         # All exams should have show_answers=True
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             assert exam.show_answers is True
 
     def test_batch_with_single_exam(self, sample_questions, sample_exam_template):
@@ -289,7 +289,7 @@ class TestExamBatchEdgeCases:
         batch.make_batch()
 
         # Should have sequential serial numbers (0-indexed, padded to width of N)
-        serial_numbers = [exam.sn for exam in batch.exams]
+        serial_numbers = [exam.sn for exam in batch.exams.values()]
         expected = ["0", "1", "2"]  # For N=3, serial_width=1, so no padding needed
         assert serial_numbers == expected
 
@@ -311,7 +311,7 @@ class TestExamBatchEdgeCases:
         batch.make_batch()
 
         # For N=12, serial_width=2, so numbers should be zero-padded
-        serial_numbers = [exam.sn for exam in batch.exams]
+        serial_numbers = [exam.sn for exam in batch.exams.values()]
         expected = [f"{i:02d}" for i in range(12)]  # ["00", "01", "02", ..., "11"]
         assert serial_numbers == expected
         assert all(len(sn) == 2 for sn in serial_numbers)
@@ -583,7 +583,7 @@ class TestExamBatchEdgeCases:
         batch.make_batch()
 
         # Create directories and actual PDF files
-        for exam in batch.exams:
+        for exam in batch.exams.values():
             exam_dir = temp_dir / exam.sn
             exam_dir.mkdir(parents=True, exist_ok=True)
             pdf_file = exam_dir / "exam.pdf"

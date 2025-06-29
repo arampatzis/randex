@@ -7,6 +7,8 @@ import click
 
 from cli.batch import main as batch_main
 from cli.download_examples import main as download_examples_main
+from cli.grade import main as grade_main
+from cli.random_answers import main as random_answers_main
 from cli.validate import main as validate_main
 from randex.cli import CustomCommand, setup_logging
 
@@ -230,6 +232,84 @@ def validate(
         show_answers=show_answers,
         overwrite=overwrite,
     )
+
+
+@cli.command(
+    cls=CustomCommand,
+    context_settings={"help_option_names": ["--help"]},
+)
+@click.option(
+    "--exams-path",
+    "-e",
+    type=click.Path(
+        exists=True,
+        resolve_path=True,
+        file_okay=True,
+        dir_okay=False,
+        path_type=Path,
+    ),
+    required=True,
+    help="Path to the YAML file that contains the batch of exams configuration",
+)
+@click.option(
+    "--grades-path",
+    "-g",
+    type=click.Path(
+        exists=True,
+        resolve_path=True,
+        file_okay=True,
+        dir_okay=False,
+        path_type=Path,
+    ),
+    required=True,
+    help="Path to the YAML file that contains the grades of the exams",
+)
+@click.option(
+    "--negative-score",
+    "-n",
+    type=click.FloatRange(0, 1, min_open=False, max_open=False),
+    default=None,
+    help=(
+        "The negative score for each wrong answer is computed as "
+        "1 / (number of answers - 1) for each question. "
+        "If provided, the negative score is used instead."
+    ),
+)
+def grade(
+    exams_path: Path,
+    grades_path: Path,
+    negative_score: float | None = None,
+) -> None:
+    """Grade the exams in the exams_path with the grades in the grades_path."""
+    grade_main(
+        exams_path=exams_path,
+        grades_path=grades_path,
+        negative_score=negative_score,
+    )
+
+
+@cli.command(
+    cls=CustomCommand,
+    context_settings={"help_option_names": ["--help"]},
+)
+@click.option(
+    "--exams-path",
+    "-e",
+    type=click.Path(
+        exists=True,
+        resolve_path=True,
+        file_okay=True,
+        dir_okay=False,
+        path_type=Path,
+    ),
+    required=True,
+    help="Path to the YAML file that contains the batch of exams configuration",
+)
+def random_answers(
+    exams_path: Path,
+) -> None:
+    """Generate random answers for the exams in the exams_path."""
+    random_answers_main(exams_path=exams_path)
 
 
 if __name__ == "__main__":

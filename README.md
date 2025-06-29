@@ -3,6 +3,9 @@
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![Test](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/test.yml?branch=main)](https://github.com/arampatzis/randex/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/arampatzis/randex/branch/main/graph/badge.svg)](https://codecov.io/gh/arampatzis/randex)
+![Ruff Lint](https://github.com/arampatzis/randex/actions/workflows/lint.yml/badge.svg)
+![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 [![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/)
 
 
@@ -17,10 +20,10 @@ Randex requires Python version `3.10` or higher and `latexmk`.
 
 ### Randex
 
-To install Randex, run the following command from the root folder of the project:
+To install Randex, run:
 
 ```sh
-pip install randex
+pipx install randex
 ```
 
 ### latexmk
@@ -97,7 +100,24 @@ The batch size (5 in this example) specifies the number of exams to create.
 
 ### Grade
 
-Not implemented yet.
+First create a batch of exams in a `tmp` folder.
+Then create a csv file with random answers to the exams,
+
+```sh
+randex random-answers -e tmp/exams.yaml
+```
+
+Then grade the exams,
+
+```sh
+randex grade -e tmp/exams.yaml -g tmp/answers.csv
+```
+
+The `-n` option can be used to specify the negative score for each wrong answer.
+If not provided, the negative score is computed as `1 / (number of answers - 1)`
+for each question.
+Set it to `0` to disable the negative scoring.
+
 
 ## Randex Data Scheme
 
