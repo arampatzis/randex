@@ -18,7 +18,7 @@ from a user-defined pool of questions.
 The final exam is generated as a LaTeX document and compiled into a PDF.
 Multiple exams can be created at once.
 
-## Quick Start
+## 🚀 Quick Start
 
 Install `randex`:
 
@@ -58,7 +58,7 @@ randex grade -e tmp/exams.yaml -g tmp/answers.csv
 
 
 
-## Installation
+## 📦 Installation
 
 Randex requires Python version `3.10` or higher and `latexmk`.
 
@@ -89,7 +89,7 @@ in the TeXLive and MiKTeX distributions.
 If you have already `Latex` installed in your system, you will most
 probably have already `latexmk` installed as well.
 
-## Randex Commands
+## 🔧 Randex Commands
 
 ### randex download-examples
 
@@ -163,7 +163,7 @@ for each question.
 Set it to `0` to disable the negative scoring.
 
 
-## Randex Data Scheme
+## 📁 Randex Data Scheme
 
 Randex requires two types of data files to create the exams.
 
@@ -219,7 +219,7 @@ The `randex` commands take the `template-exam.yaml` file and the folders contain
 
 
 
-# License
+## 📄 License
 
-📄 Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
+Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
 Commercial use is prohibited without prior permission.
