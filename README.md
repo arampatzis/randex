@@ -7,7 +7,7 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
 [![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/)
-[![PyPI Publish](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/release.yml?label=Publish)](https://github.com/arampatzis/randex/actions/workflows/release.yml)
+[![PyPI Publish](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/pypi.yml?label=Publish)](https://github.com/arampatzis/randex/actions/workflows/pypi.yml)
 
 
 
