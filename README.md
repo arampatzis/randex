@@ -2,7 +2,7 @@
 
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![Test](https://github.com/arampatzis/randex/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/arampatzis/randex/actions/workflows/test.yml)
-[![Ruff Lint](https://github.com/arampatzis/randex/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/arampatzis/randex/actions/workflows/lint.yml)
+[![Ruff](https://github.com/arampatzis/randex/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/arampatzis/randex/actions/workflows/lint.yml)
 [![codecov](https://codecov.io/gh/arampatzis/randex/branch/main/graph/badge.svg)](https://codecov.io/gh/arampatzis/randex)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
