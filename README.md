@@ -9,6 +9,12 @@
 [![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/)
 
 
+![Ruff Lint](https://github.com/arampatzis/randex/actions/workflows/lint.yml/badge.svg?branch=main)
+[![Ruff Lint](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/lint.yml?branch=main)](https://github.com/arampatzis/randex/actions/workflows/lint.yml)
+
+
+
+
 Randex is a library that creates exams by randomizing multiple-choice questions selected
 from a user-defined pool of questions.
 The final exam is generated as a LaTeX document and compiled into a PDF.
