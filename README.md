@@ -8,6 +8,8 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
 [![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/)
 
+[![PyPI version](https://img.shields.io/pypi/v/randex.svg)](https://pypi.org/project/randex/) [![PyPI Publish](https://img.shields.io/github/actions/workflow/status/arampatzis/randex/release.yml?label=PyPI%20Publish)](https://github.com/arampatzis/randex/actions/workflows/release.yml)
+
 
 
 
@@ -35,7 +37,7 @@ randex download-examples
 Validate the questions in the examples:
 
 ```sh
-    randex validate examples/en/folder_* -t examples/en/template-exam.yaml -o tmp --overwrite
+randex validate examples/en/folder_* -t examples/en/template-exam.yaml -o tmp --overwrite
 ```
 
 Create a batch of exams with random questions:
