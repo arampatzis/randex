@@ -1,7 +1,7 @@
 """Tests to improve coverage for CLI modules."""
 
 import csv
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 from urllib.error import URLError
 
 import pytest
@@ -169,18 +169,25 @@ class TestCLIValidate:
         # Test validate with different options
         output_folder = temp_dir / "validate_output"
 
-        # Test without overwrite (should pass)
-        main(
-            folder=str(folder),
-            template_tex_path=template_file,
-            out_folder=output_folder,
-            clean=False,
-            show_answers=True,
-            overwrite=False,
-        )
+        # Mock subprocess.run to avoid calling actual LaTeX
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
 
-        # Verify output folder was created
-        assert output_folder.exists()
+            # Test without overwrite (should pass)
+            main(
+                folder=str(folder),
+                template_tex_path=template_file,
+                out_folder=output_folder,
+                clean=False,
+                show_answers=True,
+                overwrite=False,
+            )
+
+            # Verify output folder was created
+            assert output_folder.exists()
+
+            # Verify subprocess.run was called (compilation happened)
+            assert mock_run.called
 
 
 class TestCLIGrade:
