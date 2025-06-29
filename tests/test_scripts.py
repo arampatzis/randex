@@ -1,4 +1,4 @@
-"""Tests for the command-line scripts."""
+"""Tests for the command-line CLI modules."""
 
 import sys
 from pathlib import Path
@@ -10,7 +10,7 @@ import pytest
 from click.testing import CliRunner
 from pydantic import ValidationError
 
-from scripts.randex import cli
+from cli.randex import cli
 
 
 class TestMainCLI:
@@ -51,7 +51,7 @@ class TestDownloadExamplesScript:
             assert result.exit_code == 1
             assert "already exists" in result.output
 
-    @patch("scripts.download_examples.urllib.request.urlopen")
+    @patch("cli.download_examples.urllib.request.urlopen")
     def test_download_examples_url_error(self, mock_urlopen: MagicMock) -> None:
         """Test download with URL error."""
         mock_urlopen.side_effect = URLError("Connection failed")
@@ -63,7 +63,7 @@ class TestDownloadExamplesScript:
             assert result.exit_code == 1
             assert "Error occurred during the download process" in result.output
 
-    @patch("scripts.download_examples.urllib.request.urlopen")
+    @patch("cli.download_examples.urllib.request.urlopen")
     def test_download_examples_bad_zip(self, mock_urlopen: MagicMock) -> None:
         """Test download with bad zip file."""
         mock_response = MagicMock()
@@ -82,13 +82,13 @@ class TestDownloadExamplesScript:
     def test_download_examples_import_and_main_function(self) -> None:
         """Test that download_examples main function can be imported and called."""
         # Test importing the main function to get coverage on the function definition
-        from scripts.download_examples import main as download_main
+        from cli.download_examples import main as download_main
 
         # Test that it's a callable function
         assert callable(download_main)
 
         # Test DEST_DIR and GITHUB_ZIP_URL constants are defined
-        from scripts.download_examples import DEST_DIR, GITHUB_ZIP_URL
+        from cli.download_examples import DEST_DIR, GITHUB_ZIP_URL
 
         assert Path("examples") == DEST_DIR
         assert "github.com" in GITHUB_ZIP_URL
@@ -119,9 +119,9 @@ class TestBatchScript:
         # Should fail due to missing arguments
         assert result.exit_code != 0
 
-    @patch("scripts.batch.Pool")
-    @patch("scripts.batch.ExamBatch")
-    @patch("scripts.batch.QuestionSet")
+    @patch("cli.batch.Pool")
+    @patch("cli.batch.ExamBatch")
+    @patch("cli.batch.QuestionSet")
     def test_batch_basic_run(
         self,
         mock_question_set_class: MagicMock,
@@ -183,9 +183,9 @@ class TestBatchScript:
     def test_batch_with_batch_size(self, sample_template_file: Path) -> None:
         """Test script with different batch sizes."""
         with (
-            patch("scripts.batch.Pool") as mock_pool_class,
-            patch("scripts.batch.ExamBatch") as mock_batch_class,
-            patch("scripts.batch.QuestionSet") as mock_question_set_class,
+            patch("cli.batch.Pool") as mock_pool_class,
+            patch("cli.batch.ExamBatch") as mock_batch_class,
+            patch("cli.batch.QuestionSet") as mock_question_set_class,
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
@@ -235,9 +235,9 @@ class TestBatchScript:
     def test_batch_multiple_question_counts(self, sample_template_file: Path) -> None:
         """Test script with multiple -n flags (per-folder counts)."""
         with (
-            patch("scripts.batch.Pool") as mock_pool_class,
-            patch("scripts.batch.ExamBatch") as mock_batch_class,
-            patch("scripts.batch.QuestionSet") as mock_question_set_class,
+            patch("cli.batch.Pool") as mock_pool_class,
+            patch("cli.batch.ExamBatch") as mock_batch_class,
+            patch("cli.batch.QuestionSet") as mock_question_set_class,
         ):
             mock_pool = MagicMock()
             # Create mock questions for both folders
@@ -301,9 +301,9 @@ class TestBatchScript:
     def test_batch_with_output_folder(self, sample_template_file: Path) -> None:
         """Test script with custom output folder."""
         with (
-            patch("scripts.batch.Pool") as mock_pool_class,
-            patch("scripts.batch.ExamBatch") as mock_batch_class,
-            patch("scripts.batch.QuestionSet") as mock_question_set_class,
+            patch("cli.batch.Pool") as mock_pool_class,
+            patch("cli.batch.ExamBatch") as mock_batch_class,
+            patch("cli.batch.QuestionSet") as mock_question_set_class,
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
@@ -353,9 +353,9 @@ class TestBatchScript:
     def test_batch_overwrite_existing_folder(self, sample_template_file: Path) -> None:
         """Test script with --overwrite flag."""
         with (
-            patch("scripts.batch.Pool") as mock_pool_class,
-            patch("scripts.batch.ExamBatch") as mock_batch_class,
-            patch("scripts.batch.QuestionSet") as mock_question_set_class,
+            patch("cli.batch.Pool") as mock_pool_class,
+            patch("cli.batch.ExamBatch") as mock_batch_class,
+            patch("cli.batch.QuestionSet") as mock_question_set_class,
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
@@ -423,9 +423,9 @@ class TestBatchScript:
     def test_batch_clean_flag(self, sample_template_file: Path) -> None:
         """Test script with --clean flag."""
         with (
-            patch("scripts.batch.Pool") as mock_pool_class,
-            patch("scripts.batch.ExamBatch") as mock_batch_class,
-            patch("scripts.batch.QuestionSet") as mock_question_set_class,
+            patch("cli.batch.Pool") as mock_pool_class,
+            patch("cli.batch.ExamBatch") as mock_batch_class,
+            patch("cli.batch.QuestionSet") as mock_question_set_class,
         ):
             mock_pool = MagicMock()
             # Create mock questions for the pool
@@ -500,7 +500,7 @@ class TestValidateScript:
     def test_validate_script_import(self) -> None:
         """Test that validate script can be imported."""
         try:
-            from scripts.validate import main as validate_main
+            from cli.validate import main as validate_main
 
             assert callable(validate_main)
         except ImportError:
@@ -514,9 +514,9 @@ class TestValidateScript:
         assert result.exit_code == 0
         assert "help" in result.output.lower()
 
-    @patch("scripts.validate.Pool")
-    @patch("scripts.validate.Exam")
-    @patch("scripts.validate.QuestionSet")
+    @patch("cli.validate.Pool")
+    @patch("cli.validate.Exam")
+    @patch("cli.validate.QuestionSet")
     def test_validate_basic_run(
         self,
         mock_question_set_class: MagicMock,
@@ -606,10 +606,10 @@ class TestValidateScript:
             assert result.exit_code != 0
             assert "already exists" in result.output
 
-    @patch("scripts.validate.Pool")
-    @patch("scripts.validate.Exam")
-    @patch("scripts.validate.QuestionSet")
-    @patch("scripts.validate.ExamTemplate")
+    @patch("cli.validate.Pool")
+    @patch("cli.validate.Exam")
+    @patch("cli.validate.QuestionSet")
+    @patch("cli.validate.ExamTemplate")
     def test_validate_main_with_none_output_folder(
         self,
         mock_template_class: MagicMock,
@@ -654,7 +654,7 @@ class TestValidateScript:
         mock_template_class.load.return_value = mock_template
 
         # Import and call the main function directly with None output folder
-        from scripts.validate import main as validate_main
+        from cli.validate import main as validate_main
 
         with TemporaryDirectory() as temp_dir:
             test_folder = Path(temp_dir) / "test_folder"
@@ -674,10 +674,10 @@ class TestValidateScript:
             mock_pool_class.assert_called_once()
             mock_exam.compile.assert_called_once()
 
-    @patch("scripts.validate.Pool")
-    @patch("scripts.validate.Exam")
-    @patch("scripts.validate.QuestionSet")
-    @patch("scripts.validate.ExamTemplate")
+    @patch("cli.validate.Pool")
+    @patch("cli.validate.Exam")
+    @patch("cli.validate.QuestionSet")
+    @patch("cli.validate.ExamTemplate")
     def test_validate_with_debug_logging(
         self,
         mock_template_class: MagicMock,
@@ -746,10 +746,10 @@ class TestValidateScript:
             # Should have called pool.print_questions due to debug logging
             mock_pool.print_questions.assert_called_once()
 
-    @patch("scripts.validate.Pool")
-    @patch("scripts.validate.Exam")
-    @patch("scripts.validate.QuestionSet")
-    @patch("scripts.validate.ExamTemplate")
+    @patch("cli.validate.Pool")
+    @patch("cli.validate.Exam")
+    @patch("cli.validate.QuestionSet")
+    @patch("cli.validate.ExamTemplate")
     def test_validate_compilation_with_stdout_and_stderr(
         self,
         mock_template_class: MagicMock,
@@ -812,10 +812,10 @@ class TestValidateScript:
             assert result.exit_code == 0
             assert "Validation completed successfully" in result.output
 
-    @patch("scripts.validate.Pool")
-    @patch("scripts.validate.Exam")
-    @patch("scripts.validate.QuestionSet")
-    @patch("scripts.validate.ExamTemplate")
+    @patch("cli.validate.Pool")
+    @patch("cli.validate.Exam")
+    @patch("cli.validate.QuestionSet")
+    @patch("cli.validate.ExamTemplate")
     def test_validate_compilation_failure(
         self,
         mock_template_class: MagicMock,
@@ -878,13 +878,13 @@ class TestValidateScript:
 
 
 class TestRandexVersionHandling:
-    """Test version handling edge cases in scripts/randex.py."""
+    """Test version handling edge cases in cli/randex.py."""
 
     def test_version_package_not_found_error(self) -> None:
         """Test fallback version when importlib.metadata.PackageNotFoundError occurs."""
-        # Remove scripts.randex from sys.modules if it exists
-        if "scripts.randex" in sys.modules:
-            del sys.modules["scripts.randex"]
+        # Remove cli.randex from sys.modules if it exists
+        if "cli.randex" in sys.modules:
+            del sys.modules["cli.randex"]
 
         # Mock importlib.metadata.version to raise PackageNotFoundError
         with patch("importlib.metadata.version") as mock_version:
@@ -896,10 +896,10 @@ class TestRandexVersionHandling:
             )
 
             # Now import the module, which should trigger the except block
-            import scripts.randex
+            import cli.randex
 
             # Should fall back to "0.0.0"
-            assert scripts.randex.__version__ == "0.0.0"
+            assert cli.randex.__version__ == "0.0.0"
 
     def test_cli_main_execution(self) -> None:
         """Test CLI entry point when called as main."""
@@ -909,7 +909,7 @@ class TestRandexVersionHandling:
 
         # Run the randex script module directly to trigger the main block
         result = subprocess.run(
-            [sys.executable, "-m", "scripts.randex", "--help"],
+            [sys.executable, "-m", "cli.randex", "--help"],
             capture_output=True,
             text=True,
             check=False,
@@ -920,12 +920,12 @@ class TestRandexVersionHandling:
 
 
 class TestBatchValidationError:
-    """Test ValidationError handling in scripts/batch.py."""
+    """Test ValidationError handling in cli/batch.py."""
 
-    @patch("scripts.batch.Pool")
-    @patch("scripts.batch.QuestionSet")
-    @patch("scripts.batch.ExamBatch")
-    @patch("scripts.batch.ExamTemplate")
+    @patch("cli.batch.Pool")
+    @patch("cli.batch.QuestionSet")
+    @patch("cli.batch.ExamBatch")
+    @patch("cli.batch.ExamTemplate")
     @patch("sys.exit")
     def test_batch_validation_error(
         self,
@@ -966,7 +966,7 @@ class TestBatchValidationError:
             mock_batch_class.side_effect = validation_error
 
         # Import and run the main function
-        from scripts.batch import main as batch_main
+        from cli.batch import main as batch_main
 
         # Call the main function directly with required arguments to trigger the
         # ValidationError

@@ -5,10 +5,10 @@ from pathlib import Path
 
 import click
 
+from cli.batch import main as batch_main
+from cli.download_examples import main as download_examples_main
+from cli.validate import main as validate_main
 from randex.cli import CustomCommand, setup_logging
-from scripts.batch import main as batch_main
-from scripts.download_examples import main as download_examples_main
-from scripts.validate import main as validate_main
 
 try:
     __version__ = importlib.metadata.version("randex")

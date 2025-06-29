@@ -50,7 +50,7 @@ license = "CC BY-NC 4.0"
 name = "randex"
 packages = [
   {include = "randex"},
-  {include = "scripts"}
+  {include = "cli"}
 ]
 readme = "README.md"
 version = "0.0.0"
@@ -76,7 +76,7 @@ pytest-cov = "^6.2.1"
 types-pyyaml = "^6.0.12.20250516"
 
 [tool.poetry.scripts]
-randex = "scripts.randex:cli"
+randex = "cli.randex:cli"
 
 [tool.poetry.urls]
 "Homepage" = "https://github.com/arampatzis/randex"

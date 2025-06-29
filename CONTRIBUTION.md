@@ -79,7 +79,7 @@ poetry add pydantic
 poetry add --group dev pytest
 ```
 
-### Scripts
+### CLI Modules
 
 The project defines several CLI commands in `pyproject.toml`:
 - `randex batch`: Main command for creating exam batches
@@ -99,10 +99,10 @@ We use pytest for testing with comprehensive test coverage. The project maintain
 poetry run pytest
 
 # Run with coverage
-poetry run pytest --cov=randex --cov=scripts
+poetry run pytest --cov=randex --cov=cli
 
 # Run with coverage report
-poetry run pytest --cov=randex --cov=scripts --cov-report=term-missing
+poetry run pytest --cov=randex --cov=cli --cov-report=term-missing
 
 # Run specific test types using markers
 poetry run pytest -m unit        # Unit tests
@@ -122,7 +122,7 @@ poetry run pytest tests/test_exam.py::test_create_valid_exam
 ### Coverage Requirements
 
 - **Minimum coverage**: 90% (enforced by pre-commit hooks)
-- Coverage includes both the `randex` package and `scripts` modules
+- Coverage includes both the `randex` package and `cli` modules
 - Pull requests that reduce coverage below 90% will fail CI checks
 - New code should include comprehensive tests covering both success and error paths
 
@@ -363,7 +363,7 @@ randex/
 │   ├── __init__.py
 │   ├── cli.py             # CLI utilities and logging
 │   └── exam.py            # Core classes and functions
-├── scripts/               # CLI scripts
+├── cli/                   # CLI modules
 │   ├── __init__.py
 │   ├── batch.py           # Batch exam generation script
 │   ├── validate.py        # Question validation script
@@ -386,9 +386,9 @@ randex/
 - **`pyproject.toml`**: Project configuration, dependencies, build settings
 - **`randex/exam.py`**: Main implementation with Question, Exam, Pool, and related classes
 - **`randex/cli.py`**: CLI utilities, logging setup, and command helpers
-- **`scripts/randex.py`**: Main CLI entry point with subcommands
+- **`cli/randex.py`**: Main CLI entry point with subcommands
 - **`tests/conftest.py`**: Shared test fixtures and configuration
-- **`scripts/`**: Command-line interface implementations
+- **`cli/`**: Command-line interface implementations
 
 ## Git Workflow
 

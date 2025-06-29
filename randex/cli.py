@@ -1,4 +1,4 @@
-"""Shared CLI utilities for randex scripts."""
+"""Shared CLI utilities for randex CLI modules."""
 
 import logging
 import sys

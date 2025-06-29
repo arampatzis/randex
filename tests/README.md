@@ -11,7 +11,7 @@ This directory contains comprehensive unit and integration tests for the Randex 
 - **`test_exam_template.py`** - Tests for the `ExamTemplate` class
 - **`test_exam.py`** - Tests for the `Exam` class
 - **`test_exam_batch.py`** - Tests for the `ExamBatch` class
-- **`test_scripts.py`** - Tests for the command-line scripts
+- **`test_scripts.py`** - Tests for the command-line CLI modules
 - **`test_integration.py`** - End-to-end integration tests
 
 ## Running Tests
