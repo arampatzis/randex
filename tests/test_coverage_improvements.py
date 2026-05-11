@@ -1,6 +1,7 @@
 """Tests to improve coverage for uncovered edge cases and error paths."""
 
 import csv
+import logging
 import os
 import subprocess
 from collections import OrderedDict
@@ -35,9 +36,8 @@ class TestPoolEdgeCases:
         finally:
             os.chdir(original_cwd)  # Always restore original directory
 
-    def test_pool_print_questions_method(self, temp_dir):
+    def test_pool_print_questions_method(self, temp_dir, caplog):
         """Test Pool.print_questions method."""
-        # Create a folder with questions
         folder = temp_dir / "test_folder"
         folder.mkdir()
 
@@ -52,27 +52,18 @@ class TestPoolEdgeCases:
 
         pool = Pool(folder=folder)
 
-        # Test the print_questions method
-        with patch("randex.exam.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
+        with caplog.at_level(logging.INFO, logger="randex.exam"):
             pool.print_questions()
 
-            # Verify that logger.info was called
-            assert mock_get_logger.called
-            # Should have called with folder name and question details
-            calls = mock_logger.info.call_args_list
-            assert any("test_folder" in str(call) for call in calls)
-            assert any("What is 2+2?" in str(call) for call in calls)
+        log_text = " ".join(record.message for record in caplog.records)
+        assert "test_folder" in log_text
+        assert "What is 2+2?" in log_text
 
-    def test_pool_print_questions_empty_folders(self, temp_dir):
+    def test_pool_print_questions_empty_folders(self, temp_dir, caplog):
         """Test Pool.print_questions with empty folders (should continue)."""
-        # Create folder with valid questions to actually test the print functionality
         folder = temp_dir / "test_folder"
         folder.mkdir()
 
-        # Create a valid question to ensure print_questions actually runs
         question_file = folder / "q1.yaml"
         question_data = {
             "question": "What is 2+2?",
@@ -82,21 +73,15 @@ class TestPoolEdgeCases:
         with open(question_file, "w") as f:
             yaml.dump(question_data, f)
 
-        # Create an empty subfolder
         empty_folder = folder / "empty_subfolder"
         empty_folder.mkdir()
 
         pool = Pool(folder=folder)
 
-        with patch("randex.exam.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            # This should not raise an error, just continue
+        with caplog.at_level(logging.INFO, logger="randex.exam"):
             pool.print_questions()
 
-            # Should have logging from the valid questions
-            assert mock_get_logger.called
+        assert len(caplog.records) > 0
 
 
 class TestQuestionSetEdgeCases:

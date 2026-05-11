@@ -307,96 +307,25 @@ Between releases, versions are automatically generated with commit information:
 ### Prerequisites
 
 1. Have an account on [PyPI](https://pypi.org/)
-2. Configure Poetry with your PyPI credentials:
-   ```bash
-   poetry config pypi-token.pypi your-pypi-token
-   ```
+2. Create a PyPI API token in your account settings
+3. Add the token to the repository secrets as `PYPI_API_TOKEN`
 
 ### Publishing Process
 
 1. **Ensure everything is ready**:
-   - All tests pass: `poetry run pytest`
-   - All commits have passed pre-commit hooks (automatic)
    - Documentation is up to date
+   - The command `pre-commit run --all-files` does not fail
+   - Push the changes to the repository
 
-2. **Create an empty commit** (this sets the version):
-   ```bash
-    git commit --allow-empty -m "release v1.2.3"
-   ```
+2. **Create a git tag** (this sets the version):
 
-3. **Create a git tag** (this sets the version):
    ```bash
     git tag v1.2.3
     git push origin v1.2.3
    ```
 
-4. **Build the package**:
-   ```bash
-   poetry build
-   ```
+   The `pypi.yml` workflow will automatically build and publish the package to PyPI.
 
-4. **Publish to PyPI**:
-   ```bash
-   poetry publish
-   ```
-
-### Publishing to Test PyPI
-
-For testing purposes, you can publish to Test PyPI first:
-
-1. Configure Test PyPI:
-   ```bash
-   poetry config repositories.testpypi https://test.pypi.org/legacy/
-   poetry config pypi-token.testpypi your-test-pypi-token
-   ```
-
-2. Publish to Test PyPI:
-   ```bash
-   poetry publish -r testpypi
-   ```
-
-## Project Structure
-
-```
-randex/
-├── randex/                 # Main package
-│   ├── __init__.py
-│   ├── cli.py             # CLI utilities and logging
-│   └── exam.py            # Core classes and functions
-├── cli/                   # CLI modules
-│   ├── __init__.py
-│   ├── batch.py           # Batch exam generation script
-│   ├── validate.py        # Question validation script
-│   ├── randex.py          # Main CLI entry point
-│   └── download_examples.py # Download examples script
-├── tests/                 # Test suite
-│   ├── conftest.py        # Test fixtures and configuration
-│   └── test_*.py          # Individual test modules
-├── examples/              # Example questions and templates
-│   ├── en/                # English examples
-│   └── gr/                # Greek examples
-├── pyproject.toml         # Project configuration
-├── poetry.lock            # Locked dependencies
-├── .pre-commit-config.yaml # Pre-commit hooks configuration
-└── README.md              # Project documentation
-```
-
-### Key Files
-
-- **`pyproject.toml`**: Project configuration, dependencies, build settings
-- **`randex/exam.py`**: Main implementation with Question, Exam, Pool, and related classes
-- **`randex/cli.py`**: CLI utilities, logging setup, and command helpers
-- **`cli/randex.py`**: Main CLI entry point with subcommands
-- **`tests/conftest.py`**: Shared test fixtures and configuration
-- **`cli/`**: Command-line interface implementations
-
-## Git Workflow
-
-### Branch Strategy
-
-1. **main**: Stable branch, always ready for release
-2. **feature branches**: For new features (`feature/feature-name`)
-3. **bugfix branches**: For bug fixes (`bugfix/issue-description`)
 
 ### Commit Guidelines
 
@@ -413,16 +342,6 @@ Add support for multiple question formats
 - Add tests for various question formats
 - Update documentation with examples
 ```
-
-### Pull Request Process
-
-1. Create a feature branch from main
-2. Make your changes with tests and documentation
-3. Run the test suite: `poetry run pytest`
-4. Commit your changes (pre-commit hooks will run automatically)
-5. Create a pull request with clear description
-6. Address any review feedback
-7. Merge after approval
 
 ## Getting Help
 

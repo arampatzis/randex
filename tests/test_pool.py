@@ -1,6 +1,7 @@
 """Tests for the Pool class."""
 
 import logging
+import os
 from unittest.mock import patch
 
 import pytest
@@ -226,3 +227,40 @@ class TestPoolEdgeCases:
         folders1 = pool.folders
         folders2 = pool.folders
         assert folders1 is folders2
+
+    def test_pool_all_invalid_yaml_yields_empty_question_set(self, temp_dir):
+        """Pool with only invalid YAML should result in empty questions."""
+        folder = temp_dir / "bad_only"
+        folder.mkdir()
+        (folder / "bad.yaml").write_text("question: incomplete\n")
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_dir)
+            pool = Pool(folder=folder)
+            assert pool.number_of_folders == 0
+            assert len(pool.questions) == 0
+        finally:
+            os.chdir(original_cwd)
+
+    def test_pool_glob_bracket_expression(self, temp_dir):
+        """Glob bracket patterns like test_[ab] should match the expected subset."""
+        (temp_dir / "test_a").mkdir()
+        (temp_dir / "test_b").mkdir()
+        (temp_dir / "test_x").mkdir()
+
+        for sub in ("test_a", "test_b", "test_x"):
+            (temp_dir / sub / "q.yaml").write_text(
+                "question: Q?\nanswers: [A, B]\nright_answer: 0\n"
+            )
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_dir)
+            pool = Pool(folder="test_[ab]")
+            folder_names = {f.name for f in pool.folders}
+            assert "test_a" in folder_names
+            assert "test_b" in folder_names
+            assert "test_x" not in folder_names
+        finally:
+            os.chdir(original_cwd)

@@ -3,7 +3,6 @@
 import csv
 import random
 from pathlib import Path
-from typing import cast
 
 from randex.cli import get_logger
 from randex.exam import ExamBatch
@@ -28,7 +27,7 @@ def main(exams_path: Path) -> None:
         sn = int(exam.sn)
         match sn:
             case 0:
-                all_answers[sn] = cast("list[int | None]", exam.right_answers)
+                all_answers[sn] = list(exam.right_answers)
             case 1:
                 num_questions = len(exam.questions)
                 num_none = random.randint(1, num_questions)

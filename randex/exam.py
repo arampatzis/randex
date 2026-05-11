@@ -23,8 +23,6 @@ from pypdf import PdfWriter
 from tqdm import tqdm
 from typing_extensions import Self
 
-from randex.cli import get_logger
-
 logger = logging.getLogger(__name__)
 
 
@@ -83,7 +81,10 @@ class Question(BaseModel):
         """
         if not isinstance(v, list):
             raise TypeError("'answers' must be a list")
-        return [str(a) for a in v]
+        converted = [str(a) for a in v]
+        if len(converted) < 2:
+            raise ValueError("'answers' must contain at least 2 options")
+        return converted
 
     @field_validator("right_answer", mode="before")
     @classmethod
@@ -303,8 +304,6 @@ class Pool:
 
     def print_questions(self) -> None:
         """Print all questions in the pool grouped by folder."""
-        logger = get_logger(__name__)
-
         first = True
         for folder, question_list in sorted(
             self.questions.items(),
@@ -420,7 +419,7 @@ class QuestionSet(BaseModel):
                 )
 
             selected = []
-            for count, folder in zip(n, self.questions, strict=False):
+            for count, folder in zip(n, self.questions, strict=True):
                 items = self.questions[folder]
                 if count > len(items):
                     raise ValueError(
@@ -602,7 +601,7 @@ class Exam(BaseModel):
             The answers to grade.
         negative_score : float | None
             The negative score for each wrong answer.
-            If None, the negative score is 1.
+            If None, defaults to 1 / (number_of_answers - 1) per question.
 
         Returns
         -------
@@ -618,7 +617,7 @@ class Exam(BaseModel):
             )
 
         score = 0.0
-        for q, r, g in zip(self.questions, self.right_answers, answers, strict=False):
+        for q, r, g in zip(self.questions, self.right_answers, answers, strict=True):
             if r == g:
                 score += 1
             elif g is None:
@@ -696,7 +695,7 @@ class Exam(BaseModel):
                 capture_output=True,
                 text=True,
                 check=False,
-                timeout=3600,
+                timeout=300,
             )
             if result.returncode != 0:
                 if verbose:

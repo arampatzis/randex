@@ -630,3 +630,55 @@ class TestExamBatchEdgeCases:
             assert len(pdf_files) == 2
             assert len(failed) == 0
             assert all(isinstance(pdf_path, Path) for pdf_path in pdf_files)
+
+    def test_compile_raises_without_make_batch(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """compile() must raise a clear RuntimeError if make_batch() was not called."""
+        questions_dict = OrderedDict({"folder1": sample_questions})
+        question_set = QuestionSet(questions=questions_dict)
+
+        batch = ExamBatch(
+            N=2,
+            questions_set=question_set,
+            exam_template=sample_exam_template,
+            n=2,
+        )
+
+        with pytest.raises(RuntimeError, match="make_batch"):
+            batch.compile(path=temp_dir, parallel=False)
+
+    def test_save_load_roundtrip_fidelity(
+        self, sample_questions, sample_exam_template, temp_dir
+    ):
+        """save() then load() must produce identical question data."""
+        questions_dict = OrderedDict({"folder1": sample_questions})
+        question_set = QuestionSet(questions=questions_dict)
+
+        original = ExamBatch(
+            N=2,
+            questions_set=question_set,
+            exam_template=sample_exam_template,
+            n=2,
+        )
+        original.make_batch()
+
+        # Capture signatures before saving
+        def signatures(batch: ExamBatch) -> list[tuple]:
+            result = []
+            for exam in batch.exams.values():
+                result.extend(
+                    (q.question, tuple(q.answers), q.right_answer)
+                    for q in exam.questions
+                )
+            return result
+
+        original_sigs = signatures(original)
+        original_sns = [exam.sn for exam in original.exams.values()]
+
+        save_path = temp_dir / "batch.yaml"
+        original.save(save_path)
+        loaded = ExamBatch.load(save_path)
+
+        assert signatures(loaded) == original_sigs
+        assert [exam.sn for exam in loaded.exams.values()] == original_sns

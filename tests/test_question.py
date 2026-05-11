@@ -1,6 +1,7 @@
 """Tests for the Question class."""
 
 import pytest
+from pydantic import ValidationError
 
 from randex.exam import Question
 
@@ -163,15 +164,23 @@ class TestQuestionMethods:
 class TestQuestionEdgeCases:
     """Test edge cases for Question class."""
 
-    def test_single_answer(self):
-        """Test question with single answer."""
+    def test_single_answer_rejected(self):
+        """Test that a question with only one answer is rejected."""
+        with pytest.raises(ValidationError, match="at least 2 options"):
+            Question(
+                question="Only one choice?",
+                answers=["Yes"],
+                right_answer=0,
+            )
+
+    def test_two_answers_accepted(self):
+        """Test that a question with exactly two answers is valid."""
         question = Question(
-            question="Only one choice?",
-            answers=["Yes"],
+            question="True or false?",
+            answers=["True", "False"],
             right_answer=0,
         )
-        assert question.right_answer == 0
-        assert len(question.answers) == 1
+        assert len(question.answers) == 2
 
     def test_many_answers(self):
         """Test question with many answers."""
@@ -203,3 +212,22 @@ class TestQuestionEdgeCases:
         latex_output = question.to_latex()
         assert "$\\sqrt{2}$" in latex_output
         assert "\\correctchoice" in latex_output
+
+    def test_to_latex_structure(self, sample_question):
+        """Test LaTeX output has exactly one correctchoice and balanced braces."""
+        latex = sample_question.to_latex()
+
+        assert latex.startswith("\\question ")
+        assert "\\begin{oneparchoices}" in latex
+        assert "\\end{oneparchoices}" in latex
+
+        assert latex.count("\\correctchoice") == 1
+        # Every non-correct answer should appear as a plain \choice line
+        regular_choice_lines = [
+            line
+            for line in latex.splitlines()
+            if "\\choice" in line and "\\correctchoice" not in line
+        ]
+        assert len(regular_choice_lines) == len(sample_question.answers) - 1
+
+        assert latex.count("{") == latex.count("}")

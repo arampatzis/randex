@@ -23,7 +23,8 @@ def main() -> None:
 
     if DEST_DIR.exists():
         logger.error(
-            "❌ Destination folder '%s' already exists. Please remove it first."
+            "❌ Destination folder '%s' already exists. Please remove it first.",
+            DEST_DIR,
         )
         sys.exit(1)
 

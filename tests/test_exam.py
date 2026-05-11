@@ -212,8 +212,54 @@ class TestExamEdgeCases:
             sn="001",
         )
 
-        # Test the internal LaTeX generation (via string representation)
         str_repr = str(exam)
 
-        # Should contain LaTeX elements
-        assert "\\documentclass" in str_repr or "Test Exam" in str_repr
+        assert "\\documentclass" in str_repr
+        assert "Test Exam" in str_repr
+        assert "\\begin{document}" in str_repr
+        assert "\\begin{questions}" in str_repr
+        assert "\\end{questions}" in str_repr
+        assert "\\end{document}" in str_repr
+
+
+class TestExamGrading:
+    """Test grading logic including edge cases."""
+
+    def test_grade_all_unanswered(self, sample_exam_template):
+        """Grading all None answers must return 0.0, not a negative value."""
+        questions = [
+            Question(question="Q1?", answers=["A", "B", "C"], right_answer=0),
+            Question(question="Q2?", answers=["X", "Y", "Z"], right_answer=1),
+        ]
+        exam = Exam(exam_template=sample_exam_template, questions=questions, sn="0")
+        assert exam.grade([None, None]) == 0.0
+
+    def test_grade_negative_score_zero(self, sample_exam_template):
+        """With negative_score=0.0 wrong answers carry no penalty."""
+        questions = [
+            Question(question="Q1?", answers=["A", "B"], right_answer=0),
+            Question(question="Q2?", answers=["X", "Y"], right_answer=0),
+        ]
+        exam = Exam(exam_template=sample_exam_template, questions=questions, sn="0")
+        score = exam.grade([0, 1], negative_score=0.0)
+        assert score == 1.0
+
+    def test_grade_negative_score_one(self, sample_exam_template):
+        """With negative_score=1.0 one right and one wrong should net 0.0."""
+        questions = [
+            Question(question="Q1?", answers=["A", "B"], right_answer=0),
+            Question(question="Q2?", answers=["X", "Y"], right_answer=0),
+        ]
+        exam = Exam(exam_template=sample_exam_template, questions=questions, sn="0")
+        score = exam.grade([0, 1], negative_score=1.0)
+        assert score == 0.0
+
+    def test_grade_default_penalty_formula(self, sample_exam_template):
+        """Default penalty is 1/(n_answers - 1); verify with 3-answer question."""
+        questions = [
+            Question(question="Q1?", answers=["A", "B", "C"], right_answer=0),
+        ]
+        exam = Exam(exam_template=sample_exam_template, questions=questions, sn="0")
+        # Wrong answer on a 3-option question: penalty = 1/(3-1) = 0.5
+        score = exam.grade([1])
+        assert score == round(-0.5, 1)
